@@ -1,0 +1,7 @@
+.idea/
+node_modules/
+*.log
+*.test.js
+yarn.lock
+.gitignore
+.eslintrc.json
