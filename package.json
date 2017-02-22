@@ -1,0 +1,19 @@
+{
+  "name": "pama",
+  "version": "0.0.1",
+  "description": "Pattern matching in JavaScript",
+  "main": "index.js",
+  "repository": "https://github.com/grassator/pama.git",
+  "author": "Dmitriy Kubyshkin <dmitriy@kubyshkin.name>",
+  "license": "MIT",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "eslint": "^3.16.0",
+    "jest": "^19.0.1"
+  },
+  "jest": {
+    "testEnvironment": "node"
+  }
+}
