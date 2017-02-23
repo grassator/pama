@@ -1,6 +1,6 @@
 /* global test, expect */
 
-const {match} = require('./index');
+const {match, _, otherwise, capture, $} = require('./index');
 
 test('returns undefined when there are no matchers are provided', () => {
     const obj = {};
@@ -71,21 +71,9 @@ test('works for matching strings', () => {
     )).toBe('string');
 });
 
-test('works for matching strings against regular expressions', () => {
-    expect(match('foo',
-        [/^f\w+$/],
-        ['bar']
-    )).toBe('foo');
-    expect(match(42,
-        [/\d+/],
-        [9]
-    )).toBe(undefined);
-});
-
 test('works for matching regular expressions', () => {
     expect(match(/foo/,
         [RegExp, /bar/, () => 'bar regexp'],
-        [/foo/, () => 'foo string matching'],
         [RegExp, /foo/g, () => 'foo regexp but global'],
         [RegExp, /foo/, () => 'foo regexp'],
     )).toBe('foo regexp');
@@ -122,4 +110,96 @@ test('works for custom classes', () => {
         [Foo, () => 'Foo'],
         [Object, () => 'object']
     )).toBe('Foo');
+});
+
+test('works for matching anything', () => {
+    expect(match(9,
+        [42, () => 'the answer'],
+        [_, () => 'not the answer']
+    )).toBe('not the answer');
+    expect(match(9,
+        [42, () => 'the answer'],
+        [otherwise, () => 'not the answer']
+    )).toBe('not the answer');
+});
+
+test('works for matching with custom predicates', () => {
+    expect(match(42,
+        [_, x => x < 0, () => 'negative'],
+        [_, x => x >= 0, () => 'positive']
+    )).toBe('positive');
+    expect(match(42,
+        [Number, 42, x => x < 0, () => 'negative'],
+        [Number, 42, x => x >= 0, () => 'positive']
+    )).toBe('positive');
+});
+
+test('works for matching props on an object', () => {
+    class Foo {
+        constructor() {
+            this.foo = 'bar';
+        }
+    }
+    expect(match(new Foo(),
+        [Foo, {foo: ['foo']}, () => 'foo'],
+        [Foo, {foo: ['bar']}, () => 'bar']
+    )).toBe('bar');
+});
+
+test('works for matching props on an object with predicates', () => {
+    class Foo {
+        constructor() {
+            this.foo = 'bar';
+        }
+    }
+    expect(match(new Foo(),
+        [Foo, {foo: ['foo']}, () => 'foo'],
+        [Foo, {foo: [_, x => x.length > 2]}, () => 'bar']
+    )).toBe('bar');
+});
+
+test('works for deep matching', () => {
+    class Foo {
+        constructor(depth = 0) {
+            if (depth < 2) {
+                this.foo = new Foo(depth + 1);
+            } else {
+                this.foo = 'bar';
+            }
+        }
+    }
+    expect(match(new Foo(),
+        [Foo, {foo: ['foo']}, () => 'foo'],
+        [Foo, {foo: [Foo, {foo: [Foo, {foo: ['bar']}]}]}, () => 'bar']
+    )).toBe('bar');
+});
+
+test('works for capturing deep nested values', () => {
+    class Foo {
+        constructor(depth = 0) {
+            if (depth < 2) {
+                this.foo = new Foo(depth + 1);
+            } else {
+                this.foo = 'bar';
+            }
+        }
+    }
+    expect(match(new Foo(),
+        [Foo, {foo: ['foo']}, () => 'foo'],
+        [Foo, {foo: [Foo, {foo: [Foo, {foo: capture }]}]}, x => x]
+    )).toBe('bar');
+});
+
+test('works for capturing multiple values', () => {
+    expect(match({ foo: 'foo', bar: 'bar'},
+        [Object, {foo: $, bar: $}, (x, y) => [x, y]],
+        [Object, () => 'object']
+    )).toEqual(['foo', 'bar']);
+});
+
+test('works for capturing named values', () => {
+    expect(match({ foo: 'foo', bar: 'bar'},
+        [Object, {foo: $('x'), bar: $('y')}, ({x, y}) => [x, y]],
+        [Object, () => 'object']
+    )).toEqual(['foo', 'bar']);
 });
