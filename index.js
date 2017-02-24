@@ -3,27 +3,64 @@
 function id(x) { return x; }
 function otherwise() { return true; }
 
-var defaultSubpattern = [otherwise];
+var defaultSubPattern = [otherwise];
 
-function Capture(name, subpattern) {
+function Capture(name, subPattern) {
     this.n = name === undefined ? '' : String(name);
-    this.s = subpattern === undefined ? defaultSubpattern : subpattern;
+    this.s = subPattern === undefined ? defaultSubPattern : subPattern;
 }
 
-function createCapture(name, subpattern) {
-    return new Capture(name, subpattern);
+function createCapture(name, subPattern) {
+    return new Capture(name, subPattern);
 }
 
 var defaultCapture = createCapture();
 var storage;
 
+function doMatchObject(value, pattern) {
+    var subPattern;
+    var capture;
+    var key;
+    for (key in pattern) {
+        if (pattern.hasOwnProperty(key)) {
+            capture = null;
+            subPattern = pattern[key];
+            // this happens when user specify capture without any predicates
+            if (subPattern === createCapture) {
+                capture = defaultCapture;
+            } else {
+                if (subPattern.constructor === Capture) {
+                    capture = subPattern;
+                    subPattern = subPattern.s;
+                }
+                subPattern = subPattern.concat(otherwise);
+                if (doMatch(value[key], subPattern) === null) {
+                    return false;
+                }
+            }
+            if (capture) {
+                if (capture.n === '') { // support for anonymous captures
+                    if (storage === null) {
+                        storage = [value[key]];
+                    } else {
+                        storage.push(value[key]);
+                    }
+                } else { // support for named captures
+                    if (storage === null) {
+                        storage = {};
+                    }
+                    storage[capture.n] = value[key];
+                }
+            }
+        }
+    }
+    return true;
+}
+
 function doMatch(value, declaration) {
     var valueIsObject;
     var callback;
     var pattern;
-    var subpattern;
-    var capture;
-    var key;
 
     var typeOrPattern = declaration[0];
     var hasTypeAndPattern = false;
@@ -53,7 +90,13 @@ function doMatch(value, declaration) {
             }
             break;
         case 'object':
+            if (typeOfValue !== 'object') {
+                return null;
+            }
             if (typeOrPattern === null && value === null) {
+                return callback;
+            }
+            if (doMatchObject(value, typeOrPattern)) {
                 return callback;
             }
             break;
@@ -98,42 +141,10 @@ function doMatch(value, declaration) {
     if (hasTypeAndPattern) {
         switch (typeof pattern) {
             case 'object':
-                if (predicate(value)) {
-                    for (key in pattern) {
-                        if (pattern.hasOwnProperty(key)) {
-                            capture = null;
-                            subpattern = pattern[key];
-                            // this happens when user specify capture without any predicates
-                            if (subpattern === createCapture) {
-                                capture = defaultCapture;
-                            } else {
-                                if (subpattern.constructor === Capture) {
-                                    capture = subpattern;
-                                    subpattern = subpattern.s;
-                                }
-                                subpattern = subpattern.concat(otherwise);
-                                if (doMatch(value[key], subpattern) === null) {
-                                    return null;
-                                }
-                            }
-                            if (capture) {
-                                if (capture.n === '') { // support for anonymous captures
-                                    if (storage === null) {
-                                        storage = [value[key]];
-                                    } else {
-                                        storage.push(value[key]);
-                                    }
-                                } else { // support for named captures
-                                    if (storage === null) {
-                                        storage = {};
-                                    }
-                                    storage[capture.n] = value[key];
-                                }
-                            }
-                        }
-                    }
+                if (predicate(value) && doMatchObject(value, pattern)) {
+                    return callback;
                 }
-                return callback;
+                break;
             case 'function':
                 if (pattern(value) === true && predicate(value)) {
                     return callback;

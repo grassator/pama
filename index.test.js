@@ -146,6 +146,18 @@ test('works for matching props on an object', () => {
     )).toBe('bar');
 });
 
+test('works for matching props on an object without class', () => {
+    class Foo {
+        constructor() {
+            this.foo = 'bar';
+        }
+    }
+    expect(match(new Foo(),
+        [{foo: ['foo']}, () => 'foo'],
+        [{foo: ['bar']}, () => 'bar']
+    )).toBe('bar');
+});
+
 test('works for matching props on an object with predicates', () => {
     class Foo {
         constructor() {
