@@ -3,6 +3,7 @@
 function id(x) { return x; }
 function otherwise() { return true; }
 function constant(value) { return function () { return value; }; }
+function Undefined(){}
 
 /**
  * @param {Function} type
@@ -52,6 +53,7 @@ PatternMatcher.prototype['then'] = function (callback) {
 function Capture(name, matcher) {
     this.name = name;
     this.matcher = matcher === undefined ? otherwise : matcher;
+    this.isRest = false;
 }
 
 /**
@@ -71,7 +73,17 @@ function createCapture(nameOrSubPattern, subPatternOrNothing) {
     }
 }
 
-function Undefined(){}
+/**
+ * @param {string=} name
+ * @return {Capture}
+ */
+function remainingArrayItems(name) {
+    var capture = new Capture(name);
+    capture.isRest = true;
+    return capture;
+}
+otherwise.rest = createCapture.rest = remainingArrayItems;
+
 var defaultCapture = createCapture(otherwise);
 
 /**
@@ -273,10 +285,28 @@ function doMatchObject(value, pattern, storage) {
         return value === pattern;
     }
     if (Array.isArray(pattern)) {
-        if ((!Array.isArray(value) || pattern.length !== value.length)) {
+        if (!Array.isArray(value)) {
+            return false;
+        }
+        var hasRestMatch = false;
+        var lastItem;
+        if (pattern.length > 0) {
+            lastItem = pattern[pattern.length - 1];
+            if (lastItem === remainingArrayItems || (lastItem && lastItem.isRest)) {
+                hasRestMatch = true;
+            }
+        }
+        if (!hasRestMatch && pattern.length !== value.length) {
             return false;
         }
         for (var i = 0; i < pattern.length; ++i) {
+            if (i === pattern.length - 1 && hasRestMatch) {
+                if (lastItem === remainingArrayItems) {
+                    return true;
+                } else {
+                    return doMatchObjectInternal(value.slice(i), pattern[i], storage);
+                }
+            }
             if (!doMatchObjectInternal(value[i], pattern[i], storage)) {
                 return false;
             }

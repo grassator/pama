@@ -221,3 +221,17 @@ test('works for capturing a nested match', () => {
         when(Array).then('Array')
     )).toEqual({ bar: 42 });
 });
+
+test('works for matching rest elements of the array', () => {
+    expect(match(['foo', 42],
+        when(['foo', _.rest]).then('foo'),
+        when(Array).then('Array')
+    )).toEqual('foo');
+});
+
+test('works for capturing rest elements of the array', () => {
+    expect(match(['foo', 42, 43],
+        when(['foo', $.rest()]),
+        when(Array).then('Array')
+    )).toEqual([42, 43]);
+});
