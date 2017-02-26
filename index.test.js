@@ -1,6 +1,6 @@
 /* global test, expect */
 
-const {match, when, $, capture, _} = require('./index');
+const {match, when, any: _} = require('./index');
 
 test('returns undefined when there are no matchers are provided', () => {
     const obj = {};
@@ -189,20 +189,20 @@ test('works for capturing deep nested values', () => {
     }
     expect(match(new Foo(),
         when(Foo, {foo: 'foo'}).then('foo'),
-        when(Foo, {foo: {foo:{foo: capture}}}).then(x => x)
+        when(Foo, {foo: {foo:{foo: _()}}}).then(x => x)
     )).toBe('bar');
 });
 
 test('works for capturing multiple values', () => {
     expect(match({ foo: 'foo', bar: 'bar'},
-        when(Object, {foo: $, bar: $}).then((x, y) => [x, y]),
+        when(Object, {foo: _(), bar: _()}).then((x, y) => [x, y]),
         when(Object).then('object')
     )).toEqual(['foo', 'bar']);
 });
 
 test('works for capturing named values', () => {
     expect(match({ foo: 'foo', bar: 'bar'},
-        when(Object, {foo: $('x'), bar: _}).then(({x}) => x),
+        when(Object, {foo: _('x'), bar: _}).then(({x}) => x),
         when(Object).then('object')
     )).toEqual('foo');
 });
@@ -217,7 +217,7 @@ test('works for matching shallow arrays as objects', () => {
 
 test('works for capturing a nested match', () => {
     expect(match(['foo', { bar: 42 }],
-        when(['foo', $(when({ bar: 42 }))]).then(x => x),
+        when(['foo', _(when({ bar: 42 }))]).then(x => x),
         when(Array).then('Array')
     )).toEqual({ bar: 42 });
 });
@@ -231,7 +231,7 @@ test('works for matching rest elements of the array', () => {
 
 test('works for capturing rest elements of the array', () => {
     expect(match(['foo', 42, 43],
-        when(['foo', $.rest()]),
+        when(['foo', _.rest()]),
         when(Array).then('Array')
     )).toEqual([42, 43]);
 });

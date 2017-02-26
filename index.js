@@ -1,7 +1,6 @@
 'use strict';
 
 function id(x) { return x; }
-function otherwise() { return true; }
 function constant(value) { return function () { return value; }; }
 function Undefined(){}
 
@@ -52,7 +51,7 @@ PatternMatcher.prototype['then'] = function (callback) {
  */
 function Capture(name, matcher) {
     this.name = name;
-    this.matcher = matcher === undefined ? otherwise : matcher;
+    this.matcher = matcher === undefined ? any : matcher;
     this.isRest = false;
 }
 
@@ -72,6 +71,7 @@ function createCapture(nameOrSubPattern, subPatternOrNothing) {
         return new Capture(nameOrSubPattern, subPatternOrNothing);
     }
 }
+var any = createCapture;
 
 /**
  * @param {string=} name
@@ -82,9 +82,9 @@ function remainingArrayItems(name) {
     capture.isRest = true;
     return capture;
 }
-otherwise.rest = createCapture.rest = remainingArrayItems;
+any.rest = createCapture.rest = remainingArrayItems;
 
-var defaultCapture = createCapture(otherwise);
+var defaultCapture = createCapture(any);
 
 /**
  * @param {*} value
@@ -162,12 +162,12 @@ function patternToType(pattern) {
  */
 exports['when'] = function (type, pattern) {
     if (arguments.length === 0) {
-        type = pattern = otherwise;
+        type = pattern = any;
     } else if (typeof type !== 'function') {
         pattern = type;
         type = patternToType(pattern);
     } else if (arguments.length === 1) {
-        pattern = otherwise;
+        pattern = any;
     }
     return new PatternMatcher(type, pattern);
 };
@@ -183,7 +183,7 @@ function doMatch(value, matcher, storage) {
     var callback = matcher.callback;
     var type = matcher.type;
     switch (type) {
-        case otherwise:
+        case any:
             break;
         case Boolean:
             if (typeOfValue !== 'boolean') {
@@ -218,7 +218,7 @@ function doMatch(value, matcher, storage) {
     }
     var isMatch = true;
     var guards = matcher.guards;
-    if (pattern !== otherwise) {
+    if (pattern !== any) {
         switch (matcher.type) {
             case Number:
                 if (isNaN(value) && isNaN(pattern)) {
@@ -256,14 +256,11 @@ function doMatch(value, matcher, storage) {
 function doMatchObjectInternal(value, pattern, storage) {
     var capture = null;
     var result = true;
-    if (pattern === createCapture) {
-        pattern = defaultCapture;
-    }
     if (pattern instanceof Capture) {
         capture = pattern;
         pattern = capture.matcher;
     }
-    if (pattern !== otherwise) {
+    if (pattern !== any) {
         if (!(pattern instanceof PatternMatcher)) {
             pattern = new PatternMatcher(patternToType(pattern), pattern);
         }
@@ -338,5 +335,4 @@ exports['match'] = function (value, varArgs) { // eslint-disable-line no-unused-
 };
 
 exports['capture'] = exports['$'] = createCapture;
-exports['id'] = exports['identity'] = id;
-exports['_'] = exports['otherwise'] = otherwise;
+exports['_'] = exports['any'] = any;
