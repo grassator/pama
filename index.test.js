@@ -1,6 +1,6 @@
 /* global test, expect */
 
-const {match, _, otherwise, capture, $, List} = require('./index');
+const {match, when, $, capture, _} = require('./index');
 
 test('returns undefined when there are no matchers are provided', () => {
     const obj = {};
@@ -9,128 +9,131 @@ test('returns undefined when there are no matchers are provided', () => {
 
 test('works for matching boolean values', () => {
     expect(match(false,
-        [true, _ => 'true'],
-        [false, _ => 'false']
+        when(true).then('true'),
+        when(false).then('false')
     )).toBe('false');
-    expect(match(true,
-        [true, _ => 'true'],
-        [false, _ => 'false']
-    )).toBe('true');
 });
 
 test('just returns the value if there is no callback for a match', () => {
     expect(match(false,
-        [true, _ => 'true'],
-        [false]
+        when(true).then('true'),
+        when(false)
     )).toBe(false);
     expect(match(true,
-        [true],
-        [false, _ => 'false']
+        when(true),
+        when(false).then('false')
     )).toBe(true);
 });
 
 test('works for matching number', () => {
     expect(match(42,
-        [0],
-        [42],
-        [79]
+        when(0),
+        when(42),
+        when(79)
     )).toBe(42);
     expect(match(Infinity,
-        [0],
-        [Infinity],
-        [79]
+        when(0),
+        when(Infinity),
+        when(79)
     )).toBe(Infinity);
     expect(match(-0,
-        [0],
-        [-0],
-        [79]
+        when(0),
+        when(-0),
+        when(79)
     )).toBe(-0);
     expect(Number.isNaN(match(NaN,
-        [0],
-        [NaN],
-        [79]
+        when(0),
+        when(NaN),
+        when(79)
     ))).toBe(true);
     expect(match(42,
-        [String, _ => 'string'],
-        [Number, _ => 'number']
+        when(String).then('string'),
+        when(Number).then('number')
     )).toBe('number');
 });
 
 test('works for matching strings', () => {
     expect(match('foo',
-        ['foo'],
-        ['bar']
+        when('foo'),
+        when('bar')
     )).toBe('foo');
     expect(match('',
-        ['foo'],
-        ['']
+        when('foo'),
+        when('')
     )).toBe('');
     expect(match('',
-        [String, _ => 'string'],
-        [Number, _ => 'number']
+        when(String).then('string'),
+        when(Number).then('number')
     )).toBe('string');
 });
 
 test('works for matching regular expressions', () => {
+    class Foo {}
     expect(match(/foo/,
-        [RegExp, /bar/, () => 'bar regexp'],
-        [RegExp, /foo/g, () => 'foo regexp but global'],
-        [RegExp, /foo/, () => 'foo regexp'],
+        when(RegExp, { source: 'bar' } ).then('bar regexp'),
+        when(RegExp, { source: 'foo', flags: 'g' }).then('foo regexp but global'),
+        when(Foo, { source: 'foo' }).then('foo class'),
+        when(RegExp, { source: 'foo' }).then('foo regexp')
     )).toBe('foo regexp');
     expect(match(/foo/,
-        [RegExp, () => 'regexp'],
-        [String, () => 'string']
+        when(RegExp).then('regexp'),
+        when(String).then('string')
     )).toBe('regexp');
 });
 
 test('works for null', () => {
     expect(match(null,
-        [undefined, () => 'undefined'],
-        [null, () => 'null'],
-        [false, () => 'false']
+        when(undefined).then('undefined'),
+        when(false).then('false'),
+        when(null).then('null')
     )).toBe('null');
     expect(match(null,
-        [Object, () => 'object'],
-        [null, () => 'null is not really an object'],
-        [false, () => 'false']
-    )).toBe('null is not really an object');
+        when(undefined).then('undefined'),
+        when(false).then('false'),
+        when(Object).then('object')
+    )).toBe('object');
 });
 
 test('works for undefined', () => {
     expect(match(undefined,
-        [null, () => 'null'],
-        [undefined, () => 'undefined'],
-        [false, () => 'false']
+        when(false).then('false'),
+        when(null).then('null'),
+        when(undefined).then('undefined')
     )).toBe('undefined');
 });
 
 test('works for custom classes', () => {
     class Foo {}
+    class Bar {}
     expect(match(new Foo(),
-        [Foo, () => 'Foo'],
-        [Object, () => 'object']
+        when(Bar).then('Bar'),
+        when(Foo).then('Foo'),
+        when(Object).then('object')
     )).toBe('Foo');
 });
 
 test('works for matching anything', () => {
     expect(match(9,
-        [42, () => 'the answer'],
-        [_, () => 'not the answer']
-    )).toBe('not the answer');
-    expect(match(9,
-        [42, () => 'the answer'],
-        [otherwise, () => 'not the answer']
+        when(42).then('the answer'),
+        when().then('not the answer')
     )).toBe('not the answer');
 });
 
 test('works for matching with custom predicates', () => {
     expect(match(42,
-        [_, x => x < 0, () => 'negative'],
-        [_, x => x >= 0, () => 'positive']
+        when()
+            .guard(x => x < 0).then('negative')
+            .guard(x => x >= 0).then('positive')
     )).toBe('positive');
     expect(match(42,
-        [Number, 42, x => x < 0, () => 'negative'],
-        [Number, 42, x => x >= 0, () => 'positive']
+        when(Number)
+            .guard(x => x < 0).then('negative')
+            .guard(x => x >= 0).then('positive')
+    )).toBe('positive');
+    expect(match(42,
+        when(Number, 42)
+            .guard(x => x < 0).then('negative')
+            .guard(x => x >= 0).then('positive')
     )).toBe('positive');
 });
 
@@ -141,8 +144,8 @@ test('works for matching props on an object', () => {
         }
     }
     expect(match(new Foo(),
-        [Foo, {foo: ['foo']}, () => 'foo'],
-        [Foo, {foo: ['bar']}, () => 'bar']
+        when(Foo, {foo: 'foo'}).then('foo'),
+        when(Foo, {foo: 'bar'}).then('bar')
     )).toBe('bar');
 });
 
@@ -153,20 +156,8 @@ test('works for matching props on an object without class', () => {
         }
     }
     expect(match(new Foo(),
-        [{foo: ['foo']}, () => 'foo'],
-        [{foo: ['bar']}, () => 'bar']
-    )).toBe('bar');
-});
-
-test('works for matching props on an object with predicates', () => {
-    class Foo {
-        constructor() {
-            this.foo = 'bar';
-        }
-    }
-    expect(match(new Foo(),
-        [Foo, {foo: ['foo']}, () => 'foo'],
-        [Foo, {foo: [_, x => x.length > 2]}, () => 'bar']
+        when({foo: 'foo'}).then('foo'),
+        when({foo: 'bar'}).then('bar')
     )).toBe('bar');
 });
 
@@ -181,8 +172,8 @@ test('works for deep matching', () => {
         }
     }
     expect(match(new Foo(),
-        [Foo, {foo: ['foo']}, () => 'foo'],
-        [Foo, {foo: [Foo, {foo: [Foo, {foo: ['bar']}]}]}, () => 'bar']
+        when(Foo, {foo: 'foo'}).then('foo'),
+        when(Foo, {foo: {foo:{foo: 'bar'}}}).then('bar')
     )).toBe('bar');
 });
 
@@ -197,35 +188,29 @@ test('works for capturing deep nested values', () => {
         }
     }
     expect(match(new Foo(),
-        [Foo, {foo: ['foo']}, () => 'foo'],
-        [Foo, {foo: [Foo, {foo: [Foo, {foo: capture }]}]}, x => x]
+        when(Foo, {foo: 'foo'}).then('foo'),
+        when(Foo, {foo: {foo:{foo: capture}}}).then(x => x)
     )).toBe('bar');
 });
 
 test('works for capturing multiple values', () => {
     expect(match({ foo: 'foo', bar: 'bar'},
-        [Object, {foo: $, bar: $}, (x, y) => [x, y]],
-        [Object, () => 'object']
+        when(Object, {foo: $, bar: $}).then((x, y) => [x, y]),
+        when(Object).then('object')
     )).toEqual(['foo', 'bar']);
 });
 
 test('works for capturing named values', () => {
     expect(match({ foo: 'foo', bar: 'bar'},
-        [Object, {foo: $('x'), bar: $('y')}, ({x, y}) => [x, y]],
-        [Object, () => 'object']
-    )).toEqual(['foo', 'bar']);
+        when(Object, {foo: $('x'), bar: _}).then(({x}) => x),
+        when(Object).then('object')
+    )).toEqual('foo');
 });
 
 test('works for matching shallow arrays as objects', () => {
     expect(match(['foo', 42],
-        [['foo'], () => 'foo'],
-        [Array, () => 'Array']
-    )).toEqual('foo');
-});
-
-test('works for matching arrays as list', () => {
-    expect(match(['foo', 42],
-        [['foo'], () => 'foo'],
-        [Array, () => 'Array']
-    )).toEqual('foo');
+        when(['foo']).then('foo'),
+        when(['foo', 42]).then('foo 42'),
+        when(Array).then('Array')
+    )).toEqual('foo 42');
 });

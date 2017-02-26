@@ -2,195 +2,253 @@
 
 function id(x) { return x; }
 function otherwise() { return true; }
+function constant(value) { return function () { return value; }; }
 
-var defaultSubPattern = [otherwise];
-
-function Capture(name, subPattern) {
-    this.n = name === undefined ? '' : String(name);
-    this.s = subPattern === undefined ? defaultSubPattern : subPattern;
+function Capture(name, matcher) {
+    this.name = name;
+    this.matcher = matcher === undefined ? otherwise : matcher;
 }
 
 function createCapture(name, subPattern) {
     return new Capture(name, subPattern);
 }
 
+function Undefined(){}
+
 var defaultCapture = createCapture();
-var storage;
 
-function doMatchSubPattern(subValue, subPattern) {
-    var capture = null;
+function Storage(value) {
+    this.value = value;
+    this.storage = null;
+}
 
-    if (subPattern === otherwise) {
-        return true;
-    } else if (subPattern === createCapture) { // capture without any predicates
-        capture = defaultCapture;
+Storage.prototype.push = function (value, name) {
+    if (name !== undefined) {
+        if (this.storage === null) {
+            this.storage = {};
+        }
+        this.storage[name] = value;
     } else {
-        if (!Array.isArray(subPattern)) {
-            if (subPattern.constructor === Capture) {
-                capture = subPattern;
-                subPattern = subPattern.s;
-            } else {
-                subPattern = [subPattern];
-            }
+        if (this.storage === null) {
+            this.storage = [];
         }
-        subPattern = subPattern.concat(otherwise);
-        if (doMatch(subValue, subPattern) === null) {
-            return false;
-        }
+        this.storage.push(value);
     }
-    if (capture) {
-        if (capture.n === '') { // support for anonymous captures
-            if (storage === null) {
-                storage = [subValue];
-            } else {
-                storage.push(subValue);
-            }
-        } else { // support for named captures
-            if (storage === null) {
-                storage = {};
-            }
-            storage[capture.n] = subValue;
-        }
+};
+
+Storage.prototype.toArgs = function () {
+    if (this.storage === null) {
+        return [this.value];
     }
-    return true;
+    if (Array.isArray(this.storage)) {
+        return this.storage;
+    }
+    return [this.storage];
+};
+
+function Guard(predicate) {
+    this.predicate = predicate;
+    this.callback = id;
 }
 
-function doMatchArray(value, pattern) {
-    for (var i = 0; i < pattern.length; ++i) {
-        if (!doMatchSubPattern(value[i], pattern[i])) {
-            return false;
-        }
-    }
-    return true;
+function PatternMatcher(type, pattern) {
+    this.type = type;
+    this.pattern = pattern;
+    this.callback = id;
+    this.guards = null;
+    this.storage = null;
 }
 
-function doMatchObject(value, pattern) {
-    for (var key in pattern) {
-        if (pattern.hasOwnProperty(key)) {
-            if (!doMatchSubPattern(value[key], pattern[key])) {
-                return false;
-            }
-        }
+PatternMatcher.prototype['guard'] = function (predicate) {
+    if (this.guards === null) {
+        this.guards = [];
     }
-    return true;
-}
+    this.guards.push(new Guard(predicate));
+    return this;
+};
 
-function doMatch(value, declaration) {
-    var valueIsObject;
-    var callback;
-    var pattern;
-
-    var typeOrPattern = declaration[0];
-    var hasTypeAndPattern = false;
-    var predicate = declaration.length > 3 ? declaration[2] : otherwise;
-    var typeOfValue = typeof value;
-
-    callback = declaration.length > 1 ? declaration[declaration.length - 1] : id;
-    if (declaration.length > 2) {
-        hasTypeAndPattern = true;
-        pattern = declaration[1];
+PatternMatcher.prototype['then'] = function (callback) {
+    callback = (typeof callback === 'function') ?
+        callback : constant(callback);
+    if (this.guards !== null) {
+        this.guards[this.guards.length - 1].callback = callback
+    } else {
+        this.callback = callback;
     }
+    return this;
+};
 
-    callback = callback || id;
-    switch (typeof typeOrPattern) {
-        case 'number':
-            if (isNaN(value) && isNaN(typeOrPattern)) {
-                return callback;
-            }
-        /* fall through */
-        case 'string':
-        /* fall through */
+
+function patternToType(pattern) {
+    switch (typeof pattern) {
         case 'undefined':
-        /* fall through */
+            return Undefined;
+        case 'number':
+            return Number;
         case 'boolean':
-            if (value === typeOrPattern) {
-                return callback;
+            return Boolean;
+        case 'string':
+            return String;
+        case 'object':
+            return Object;
+    }
+}
+
+/**
+ * @param {*=} type
+ * @param {*=} pattern
+ * @returns {PatternMatcher}
+ */
+exports['when'] = function (type, pattern) {
+    if (arguments.length === 0) {
+        type = pattern = otherwise;
+    } else if (typeof type !== 'function') {
+        pattern = type;
+        type = patternToType(pattern);
+    } else if (arguments.length === 1) {
+        pattern = otherwise;
+    }
+    return new PatternMatcher(type, pattern);
+};
+
+/**
+ * @param {*} value
+ * @param {PatternMatcher} matcher
+ * @param {Storage} storage
+ */
+function doMatch(value, matcher, storage) {
+    var typeOfValue = typeof value;
+    var pattern = matcher.pattern;
+    var callback = matcher.callback;
+    var type = matcher.type;
+    switch (type) {
+        case otherwise:
+            break;
+        case Boolean:
+            if (typeOfValue !== 'boolean') {
+                return null;
             }
             break;
-        case 'object':
+        case Number:
+            if (typeOfValue !== 'number') {
+                return null;
+            }
+            break;
+        case String:
+            if (typeOfValue !== 'string') {
+                return null;
+            }
+            break;
+        case Undefined:
+            if (typeOfValue !== 'undefined') {
+                return null;
+            }
+            break;
+        case Object:
             if (typeOfValue !== 'object') {
                 return null;
             }
-            if (typeOrPattern === null && value === null) {
-                return callback;
-            }
-            if (Array.isArray(typeOrPattern)) {
-                if (doMatchArray(value, typeOrPattern)) {
-                    return callback;
-                }
-            }
-            if (doMatchObject(value, typeOrPattern)) {
-                return callback;
-            }
             break;
-        case 'function':
-            valueIsObject = typeOfValue === 'object';
-            switch (typeOrPattern) {
-                case RegExp:
-                    if (valueIsObject && value instanceof RegExp) {
-                        if (hasTypeAndPattern) {
-                            if (pattern.source === value.source && pattern.flags === value.flags) {
-                                return callback;
-                            } else {
-                                return null;
-                            }
-                        }
-                        return callback;
-                    }
-                    break;
-                case Number:
-                    if (!hasTypeAndPattern && typeOfValue === 'number') {
-                        return callback;
-                    }
-                    break;
-                case String:
-                    if (!hasTypeAndPattern && typeOfValue === 'string') {
-                        return callback;
-                    }
-                    break;
-                case otherwise:
-                    if (!hasTypeAndPattern) {
-                        return callback;
-                    }
-                    break;
-                default:
-                    if (!hasTypeAndPattern && valueIsObject && value instanceof typeOrPattern) {
-                        return callback;
-                    }
-                    break;
+        default:
+            if (!(value instanceof type)) {
+                return null;
             }
             break;
     }
-    if (hasTypeAndPattern) {
-        switch (typeof pattern) {
-            case 'object':
-                if (predicate(value) && doMatchObject(value, pattern)) {
-                    return callback;
+    var isMatch = true;
+    var guards = matcher.guards;
+    if (pattern !== otherwise) {
+        switch (matcher.type) {
+            case Number:
+                if (isNaN(value) && isNaN(pattern)) {
+                    break;
                 }
-                break;
-            case 'function':
-                if (pattern(value) === true && predicate(value)) {
-                    return callback;
-                }
+                /* fallthrough */
+            case Boolean:
+            case String:
+            case Undefined:
+                isMatch = value === pattern;
                 break;
             default:
-                if (pattern === value && predicate(value)) {
-                    return callback;
-                }
+                isMatch = doMatchObject(value, pattern, storage);
+                break;
         }
     }
-    return null;
+    if (guards !== null) {
+        for (var i = 0; i < guards.length; ++i) {
+            if (guards[i].predicate(value) === true) {
+                callback = guards[i].callback;
+                isMatch = true;
+                break;
+            }
+        }
+    }
+    return isMatch ? callback : null;
 }
 
-exports.match = function (value) {
-    for (var i = 1, callback; i < arguments.length; ++i) {
-        storage = null;
-        if ((callback = doMatch(value, arguments[i]))) {
-            return storage === null ? callback(value) :
-                (Array.isArray(storage) ?
-                    callback.apply(undefined, storage) :
-                    callback(storage)
-                );
+
+/**
+ * @param {*} value
+ * @param {*} pattern
+ * @param {Storage} storage
+ */
+function doMatchObjectInternal(value, pattern, storage) {
+    var capture = null;
+    var result = true;
+    if (pattern === createCapture) {
+        pattern = defaultCapture;
+    }
+    if (pattern instanceof Capture) {
+        capture = pattern;
+        pattern = capture.matcher;
+    }
+    if (pattern !== otherwise) {
+        if (!(pattern instanceof PatternMatcher)) {
+            pattern = new PatternMatcher(patternToType(pattern), pattern);
+        }
+        result = doMatch(value, pattern, storage) !== null;
+    }
+    if (result && capture !== null) {
+        storage.push(value, capture.name);
+    }
+    return result;
+}
+
+/**
+ * @param {*} value
+ * @param {object} pattern
+ * @param {Storage} storage
+ */
+function doMatchObject(value, pattern, storage) {
+    if (value === null) {
+        return value === pattern;
+    }
+    if (Array.isArray(pattern)) {
+        if ((!Array.isArray(value) || pattern.length !== value.length)) {
+            return false;
+        }
+        for (var i = 0; i < pattern.length; ++i) {
+            if (!doMatchObjectInternal(value[i], pattern[i], storage)) {
+                return false;
+            }
+        }
+    } else {
+        for (var key in pattern) {
+            if (pattern.hasOwnProperty(key)) {
+                if (!doMatchObjectInternal(value[key], pattern[key], storage)) {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+exports['match'] = function (value) {
+    for (var i = 1, callback, storage; i < arguments.length; ++i) {
+        storage = new Storage(value);
+        if ((callback = doMatch(value, arguments[i], storage))) {
+            return callback.apply(undefined, storage.toArgs());
         }
     }
 };
