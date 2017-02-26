@@ -4,25 +4,82 @@ function id(x) { return x; }
 function otherwise() { return true; }
 function constant(value) { return function () { return value; }; }
 
+/**
+ * @param {Function} type
+ * @param {*} pattern
+ * @constructor
+ */
+function PatternMatcher(type, pattern) {
+    this.type = type;
+    this.pattern = pattern;
+    this.callback = id;
+    this.guards = null;
+    this.storage = null;
+}
+
+/**
+ * @param {Function} predicate
+ * @returns {PatternMatcher}
+ */
+PatternMatcher.prototype['guard'] = function (predicate) {
+    if (this.guards === null) {
+        this.guards = [];
+    }
+    this.guards.push(new Guard(predicate));
+    return this;
+};
+
+/**
+ * @param {Function} callback
+ * @returns {PatternMatcher}
+ */
+PatternMatcher.prototype['then'] = function (callback) {
+    callback = (typeof callback === 'function') ?
+        callback : constant(callback);
+    if (this.guards !== null) {
+        this.guards[this.guards.length - 1].callback = callback
+    } else {
+        this.callback = callback;
+    }
+    return this;
+};
+
+/**
+ * @param {*} name
+ * @param {*} matcher
+ * @constructor
+ */
 function Capture(name, matcher) {
     this.name = name;
     this.matcher = matcher === undefined ? otherwise : matcher;
 }
 
-function createCapture(name, subPattern) {
-    return new Capture(name, subPattern);
+/**
+ * @param {*=} nameOrSubPattern
+ * @param {*=} subPatternOrNothing
+ * @returns {Capture}
+ */
+function createCapture(nameOrSubPattern, subPatternOrNothing) {
+    return new Capture(nameOrSubPattern, subPatternOrNothing);
 }
 
 function Undefined(){}
-
 var defaultCapture = createCapture();
 
-function Storage(value) {
+/**
+ * @param {*} value
+ * @constructor
+ */
+function CallbackArgs(value) {
     this.value = value;
     this.storage = null;
 }
 
-Storage.prototype.push = function (value, name) {
+/**
+ * @param {*} value
+ * @param {*} name
+ */
+CallbackArgs.prototype.push = function (value, name) {
     if (name !== undefined) {
         if (this.storage === null) {
             this.storage = {};
@@ -36,7 +93,10 @@ Storage.prototype.push = function (value, name) {
     }
 };
 
-Storage.prototype.toArgs = function () {
+/**
+ * @returns {Array}
+ */
+CallbackArgs.prototype.toArray = function () {
     if (this.storage === null) {
         return [this.value];
     }
@@ -46,39 +106,20 @@ Storage.prototype.toArgs = function () {
     return [this.storage];
 };
 
+/**
+ * @param {Function} predicate
+ * @constructor
+ */
 function Guard(predicate) {
     this.predicate = predicate;
     this.callback = id;
 }
 
-function PatternMatcher(type, pattern) {
-    this.type = type;
-    this.pattern = pattern;
-    this.callback = id;
-    this.guards = null;
-    this.storage = null;
-}
 
-PatternMatcher.prototype['guard'] = function (predicate) {
-    if (this.guards === null) {
-        this.guards = [];
-    }
-    this.guards.push(new Guard(predicate));
-    return this;
-};
-
-PatternMatcher.prototype['then'] = function (callback) {
-    callback = (typeof callback === 'function') ?
-        callback : constant(callback);
-    if (this.guards !== null) {
-        this.guards[this.guards.length - 1].callback = callback
-    } else {
-        this.callback = callback;
-    }
-    return this;
-};
-
-
+/**
+ * @param {*} pattern
+ * @returns {Function}
+ */
 function patternToType(pattern) {
     switch (typeof pattern) {
         case 'undefined':
@@ -89,7 +130,7 @@ function patternToType(pattern) {
             return Boolean;
         case 'string':
             return String;
-        case 'object':
+        default:
             return Object;
     }
 }
@@ -114,7 +155,7 @@ exports['when'] = function (type, pattern) {
 /**
  * @param {*} value
  * @param {PatternMatcher} matcher
- * @param {Storage} storage
+ * @param {CallbackArgs} storage
  */
 function doMatch(value, matcher, storage) {
     var typeOfValue = typeof value;
@@ -190,7 +231,7 @@ function doMatch(value, matcher, storage) {
 /**
  * @param {*} value
  * @param {*} pattern
- * @param {Storage} storage
+ * @param {CallbackArgs} storage
  */
 function doMatchObjectInternal(value, pattern, storage) {
     var capture = null;
@@ -216,8 +257,8 @@ function doMatchObjectInternal(value, pattern, storage) {
 
 /**
  * @param {*} value
- * @param {object} pattern
- * @param {Storage} storage
+ * @param {*} pattern
+ * @param {CallbackArgs} storage
  */
 function doMatchObject(value, pattern, storage) {
     if (value === null) {
@@ -244,15 +285,20 @@ function doMatchObject(value, pattern, storage) {
     return true;
 }
 
-exports['match'] = function (value) {
+/**
+ * @param {*} value
+ * @param {...PatternMatcher} varArgs
+ * @returns {*}
+ */
+exports['match'] = function (value, varArgs) { // eslint-disable-line no-unused-vars
     for (var i = 1, callback, storage; i < arguments.length; ++i) {
-        storage = new Storage(value);
+        storage = new CallbackArgs(value);
         if ((callback = doMatch(value, arguments[i], storage))) {
-            return callback.apply(undefined, storage.toArgs());
+            return callback.apply(undefined, storage.toArray());
         }
     }
 };
 
-exports.capture = exports.$ = createCapture;
-exports.id = exports.identity = id;
-exports._ = exports.otherwise = otherwise;
+exports['capture'] = exports['$'] = createCapture;
+exports['id'] = exports['identity'] = id;
+exports['_'] = exports['otherwise'] = otherwise;
