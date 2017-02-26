@@ -214,3 +214,10 @@ test('works for matching shallow arrays as objects', () => {
         when(Array).then('Array')
     )).toEqual('foo 42');
 });
+
+test('works for capturing a nested match', () => {
+    expect(match(['foo', { bar: 42 }],
+        when(['foo', $(when({ bar: 42 }))]).then(x => x),
+        when(Array).then('Array')
+    )).toEqual({ bar: 42 });
+});

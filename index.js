@@ -55,16 +55,24 @@ function Capture(name, matcher) {
 }
 
 /**
- * @param {*=} nameOrSubPattern
+ * @param {*} nameOrSubPattern
  * @param {*=} subPatternOrNothing
  * @returns {Capture}
  */
 function createCapture(nameOrSubPattern, subPatternOrNothing) {
-    return new Capture(nameOrSubPattern, subPatternOrNothing);
+    if (arguments.length === 1) {
+        if (typeof nameOrSubPattern === 'string') {
+            return new Capture(nameOrSubPattern);
+        } else {
+            return new Capture(undefined, nameOrSubPattern);
+        }
+    } else {
+        return new Capture(nameOrSubPattern, subPatternOrNothing);
+    }
 }
 
 function Undefined(){}
-var defaultCapture = createCapture();
+var defaultCapture = createCapture(otherwise);
 
 /**
  * @param {*} value
