@@ -17,40 +17,58 @@ function createCapture(name, subPattern) {
 var defaultCapture = createCapture();
 var storage;
 
-function doMatchObject(value, pattern) {
-    var subPattern;
-    var capture;
-    var key;
-    for (key in pattern) {
-        if (pattern.hasOwnProperty(key)) {
-            capture = null;
-            subPattern = pattern[key];
-            // this happens when user specify capture without any predicates
-            if (subPattern === createCapture) {
-                capture = defaultCapture;
+function doMatchSubPattern(subValue, subPattern) {
+    var capture = null;
+
+    if (subPattern === otherwise) {
+        return true;
+    } else if (subPattern === createCapture) { // capture without any predicates
+        capture = defaultCapture;
+    } else {
+        if (!Array.isArray(subPattern)) {
+            if (subPattern.constructor === Capture) {
+                capture = subPattern;
+                subPattern = subPattern.s;
             } else {
-                if (subPattern.constructor === Capture) {
-                    capture = subPattern;
-                    subPattern = subPattern.s;
-                }
-                subPattern = subPattern.concat(otherwise);
-                if (doMatch(value[key], subPattern) === null) {
-                    return false;
-                }
+                subPattern = [subPattern];
             }
-            if (capture) {
-                if (capture.n === '') { // support for anonymous captures
-                    if (storage === null) {
-                        storage = [value[key]];
-                    } else {
-                        storage.push(value[key]);
-                    }
-                } else { // support for named captures
-                    if (storage === null) {
-                        storage = {};
-                    }
-                    storage[capture.n] = value[key];
-                }
+        }
+        subPattern = subPattern.concat(otherwise);
+        if (doMatch(subValue, subPattern) === null) {
+            return false;
+        }
+    }
+    if (capture) {
+        if (capture.n === '') { // support for anonymous captures
+            if (storage === null) {
+                storage = [subValue];
+            } else {
+                storage.push(subValue);
+            }
+        } else { // support for named captures
+            if (storage === null) {
+                storage = {};
+            }
+            storage[capture.n] = subValue;
+        }
+    }
+    return true;
+}
+
+function doMatchArray(value, pattern) {
+    for (var i = 0; i < pattern.length; ++i) {
+        if (!doMatchSubPattern(value[i], pattern[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function doMatchObject(value, pattern) {
+    for (var key in pattern) {
+        if (pattern.hasOwnProperty(key)) {
+            if (!doMatchSubPattern(value[key], pattern[key])) {
+                return false;
             }
         }
     }
@@ -95,6 +113,11 @@ function doMatch(value, declaration) {
             }
             if (typeOrPattern === null && value === null) {
                 return callback;
+            }
+            if (Array.isArray(typeOrPattern)) {
+                if (doMatchArray(value, typeOrPattern)) {
+                    return callback;
+                }
             }
             if (doMatchObject(value, typeOrPattern)) {
                 return callback;

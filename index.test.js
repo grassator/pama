@@ -1,6 +1,6 @@
 /* global test, expect */
 
-const {match, _, otherwise, capture, $} = require('./index');
+const {match, _, otherwise, capture, $, List} = require('./index');
 
 test('returns undefined when there are no matchers are provided', () => {
     const obj = {};
@@ -214,4 +214,18 @@ test('works for capturing named values', () => {
         [Object, {foo: $('x'), bar: $('y')}, ({x, y}) => [x, y]],
         [Object, () => 'object']
     )).toEqual(['foo', 'bar']);
+});
+
+test('works for matching shallow arrays as objects', () => {
+    expect(match(['foo', 42],
+        [['foo'], () => 'foo'],
+        [Array, () => 'Array']
+    )).toEqual('foo');
+});
+
+test('works for matching arrays as list', () => {
+    expect(match(['foo', 42],
+        [['foo'], () => 'foo'],
+        [Array, () => 'Array']
+    )).toEqual('foo');
 });
