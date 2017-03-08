@@ -1,0 +1,9 @@
+language: node_js
+env: CI=true
+sudo: false
+
+node_js:
+    - 7
+notifications:
+    email:
+        - grassator@gmail.com
