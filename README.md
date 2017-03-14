@@ -52,7 +52,7 @@ Another thing to keep in mind is that the order of branches is important.
 
 ### Guards
 
-*Guard* is additional condition on top of a declarative match that allow to further refine the match:
+*Guard* is an additional condition on top of a declarative match that allows to further refine the match:
 
 ```js
 match(42,
