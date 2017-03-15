@@ -41,7 +41,7 @@
      * @param {Function} predicate
      * @returns {PatternMatcher}
      */
-    PatternMatcher.prototype['guard'] = function (predicate) {
+    PatternMatcher.prototype['where'] = function (predicate) {
         if (this.guards === null) {
             this.guards = [];
         }
@@ -105,8 +105,6 @@
     }
 
     any.rest = createCapture.rest = remainingArrayItems;
-
-    var defaultCapture = createCapture(any);
 
     /**
      * @param {*} value
@@ -221,12 +219,13 @@
                 }
                 break;
         }
-        var isMatch = true;
         var guards = matcher.guards;
+        var isMatch = guards === null;
         if (pattern !== any) {
             switch (matcher.type) {
                 case Number:
                     if (isNaN(value) && isNaN(pattern)) {
+                        isMatch = true;
                         break;
                     }
                 /* fallthrough */

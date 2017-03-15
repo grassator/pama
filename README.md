@@ -57,12 +57,12 @@ Another thing to keep in mind is that the order of branches is important.
 ```js
 when(42,
     is(Number, _)
-        .guard(x => x < 0).then('negative')
-        .guard(x => x >= 0).then('positive')
+        .where(x => x < 0).then('negative')
+        .where(x => x >= 0).then('positive')
 ); // returns 'positive'
 ```
 
-The function provided to a `guard` must return a boolean.
+The function provided to a `where` must return a boolean.
 
 ### Deep Matching
 

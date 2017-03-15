@@ -122,18 +122,25 @@ test('works for matching anything', () => {
 test('works for matching with custom predicates', () => {
     expect(when(42,
         is()
-            .guard(x => x < 0).then('negative')
-            .guard(x => x >= 0).then('positive')
+            .where(x => x < 0).then('negative')
+            .where(x => x >= 0).then('positive')
     )).toBe('positive');
     expect(when(42,
         is(Number)
-            .guard(x => x < 0).then('negative')
-            .guard(x => x >= 0).then('positive')
+            .where(x => x < 0).then('negative')
+            .where(x => x >= 0).then('positive')
     )).toBe('positive');
     expect(when(42,
         is(Number, 42)
-            .guard(x => x < 0).then('negative')
-            .guard(x => x >= 0).then('positive')
+            .where(x => x < 0).then('negative')
+            .where(x => x >= 0).then('positive')
+    )).toBe('positive');
+});
+
+test('works for matching with regular and custom predicates', () => {
+    expect(when(42,
+        is().where(x => x < 0).then('negative'),
+        is().then('positive')
     )).toBe('positive');
 });
 
