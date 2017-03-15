@@ -357,7 +357,6 @@
         }
     };
 
-    exports['capture'] = exports['$'] = createCapture;
     exports['_'] = exports['any'] = any;
 
     return exports;

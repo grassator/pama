@@ -229,6 +229,13 @@ test('works for capturing a nested match', () => {
     )).toEqual({ bar: 42 });
 });
 
+test('works for capturing inside a nested match', () => {
+    expect(when(['foo', { bar: 42 }],
+        is(['foo', is(Object, { bar: _() })]).then(x => x),
+        is(Array).then('Array')
+    )).toEqual(42);
+});
+
 test('works for matching rest elements of the array', () => {
     expect(when(['foo', 42],
         is(['foo', _.rest]).then('foo'),
