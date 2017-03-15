@@ -55,8 +55,8 @@ Another thing to keep in mind is that the order of branches is important.
 *Guard* is an additional condition on top of a declarative match that allows to further refine the match:
 
 ```js
-match(42,
-    when(Number)
+when(42,
+    is(Number, _)
         .guard(x => x < 0).then('negative')
         .guard(x => x >= 0).then('positive')
 ); // returns 'positive'
@@ -76,9 +76,9 @@ class Foo {
         }
     }
 }
-match(new Foo(),
-    when(Foo, {foo: 'foo'}).then('foo'),
-    when(Foo, {foo: {foo:{foo: 'bar'}}}).then('bar')
+when(new Foo(),
+    is(Foo, {foo: 'foo'}).then('foo'),
+    is(Foo, {foo: {foo:{foo: 'bar'}}}).then('bar')
 ); // return 'bar'
 ```
 

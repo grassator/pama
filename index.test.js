@@ -1,137 +1,137 @@
 /* global test, expect */
 
-const {match, when, any: _} = require('./index');
+const {when, is, _} = require('./index');
 
 test('returns undefined when there are no matchers are provided', () => {
     const obj = {};
-    expect(match(obj)).toBe(undefined);
+    expect(when(obj)).toBe(undefined);
 });
 
 test('works for matching boolean values', () => {
-    expect(match(false,
-        when(true).then('true'),
-        when(false).then('false')
+    expect(when(false,
+        is(true).then('true'),
+        is(false).then('false')
     )).toBe('false');
 });
 
 test('just returns the value if there is no callback for a match', () => {
-    expect(match(false,
-        when(true).then('true'),
-        when(false)
+    expect(when(false,
+        is(true).then('true'),
+        is(false)
     )).toBe(false);
-    expect(match(true,
-        when(true),
-        when(false).then('false')
+    expect(when(true,
+        is(true),
+        is(false).then('false')
     )).toBe(true);
 });
 
 test('works for matching number', () => {
-    expect(match(42,
-        when(0),
-        when(42),
-        when(79)
+    expect(when(42,
+        is(0),
+        is(42),
+        is(79)
     )).toBe(42);
-    expect(match(Infinity,
-        when(0),
-        when(Infinity),
-        when(79)
+    expect(when(Infinity,
+        is(0),
+        is(Infinity),
+        is(79)
     )).toBe(Infinity);
-    expect(match(-0,
-        when(0),
-        when(-0),
-        when(79)
+    expect(when(-0,
+        is(0),
+        is(-0),
+        is(79)
     )).toBe(-0);
-    expect(Number.isNaN(match(NaN,
-        when(0),
-        when(NaN),
-        when(79)
+    expect(Number.isNaN(when(NaN,
+        is(0),
+        is(NaN),
+        is(79)
     ))).toBe(true);
-    expect(match(42,
-        when(String).then('string'),
-        when(Number).then('number')
+    expect(when(42,
+        is(String).then('string'),
+        is(Number).then('number')
     )).toBe('number');
 });
 
 test('works for matching strings', () => {
-    expect(match('foo',
-        when('foo'),
-        when('bar')
+    expect(when('foo',
+        is('foo'),
+        is('bar')
     )).toBe('foo');
-    expect(match('',
-        when('foo'),
-        when('')
+    expect(when('',
+        is('foo'),
+        is('')
     )).toBe('');
-    expect(match('',
-        when(String).then('string'),
-        when(Number).then('number')
+    expect(when('',
+        is(String).then('string'),
+        is(Number).then('number')
     )).toBe('string');
 });
 
 test('works for matching regular expressions', () => {
     class Foo {}
-    expect(match(/foo/,
-        when(RegExp, { source: 'bar' } ).then('bar regexp'),
-        when(RegExp, { source: 'foo', flags: 'g' }).then('foo regexp but global'),
-        when(Foo, { source: 'foo' }).then('foo class'),
-        when(RegExp, { source: 'foo' }).then('foo regexp')
+    expect(when(/foo/,
+        is(RegExp, { source: 'bar' } ).then('bar regexp'),
+        is(RegExp, { source: 'foo', flags: 'g' }).then('foo regexp but global'),
+        is(Foo, { source: 'foo' }).then('foo class'),
+        is(RegExp, { source: 'foo' }).then('foo regexp')
     )).toBe('foo regexp');
-    expect(match(/foo/,
-        when(RegExp).then('regexp'),
-        when(String).then('string')
+    expect(when(/foo/,
+        is(RegExp).then('regexp'),
+        is(String).then('string')
     )).toBe('regexp');
 });
 
 test('works for null', () => {
-    expect(match(null,
-        when(undefined).then('undefined'),
-        when(false).then('false'),
-        when(null).then('null')
+    expect(when(null,
+        is(undefined).then('undefined'),
+        is(false).then('false'),
+        is(null).then('null')
     )).toBe('null');
-    expect(match(null,
-        when(undefined).then('undefined'),
-        when(false).then('false'),
-        when(Object).then('object')
+    expect(when(null,
+        is(undefined).then('undefined'),
+        is(false).then('false'),
+        is(Object).then('object')
     )).toBe('object');
 });
 
 test('works for undefined', () => {
-    expect(match(undefined,
-        when(false).then('false'),
-        when(null).then('null'),
-        when(undefined).then('undefined')
+    expect(when(undefined,
+        is(false).then('false'),
+        is(null).then('null'),
+        is(undefined).then('undefined')
     )).toBe('undefined');
 });
 
 test('works for custom classes', () => {
     class Foo {}
     class Bar {}
-    expect(match(new Foo(),
-        when(Bar).then('Bar'),
-        when(Foo).then('Foo'),
-        when(Object).then('object')
+    expect(when(new Foo(),
+        is(Bar).then('Bar'),
+        is(Foo).then('Foo'),
+        is(Object).then('object')
     )).toBe('Foo');
 });
 
 test('works for matching anything', () => {
-    expect(match(9,
-        when(42).then('the answer'),
-        when().then('not the answer')
+    expect(when(9,
+        is(42).then('the answer'),
+        is().then('not the answer')
     )).toBe('not the answer');
 });
 
 test('works for matching with custom predicates', () => {
-    expect(match(42,
-        when()
+    expect(when(42,
+        is()
             .guard(x => x < 0).then('negative')
             .guard(x => x >= 0).then('positive')
     )).toBe('positive');
-    expect(match(42,
-        when(Number)
+    expect(when(42,
+        is(Number)
             .guard(x => x < 0).then('negative')
             .guard(x => x >= 0).then('positive')
     )).toBe('positive');
-    expect(match(42,
-        when(Number, 42)
+    expect(when(42,
+        is(Number, 42)
             .guard(x => x < 0).then('negative')
             .guard(x => x >= 0).then('positive')
     )).toBe('positive');
@@ -143,9 +143,9 @@ test('works for matching props on an object', () => {
             this.foo = 'bar';
         }
     }
-    expect(match(new Foo(),
-        when(Foo, {foo: 'foo'}).then('foo'),
-        when(Foo, {foo: 'bar'}).then('bar')
+    expect(when(new Foo(),
+        is(Foo, {foo: 'foo'}).then('foo'),
+        is(Foo, {foo: 'bar'}).then('bar')
     )).toBe('bar');
 });
 
@@ -155,9 +155,9 @@ test('works for matching props on an object without class', () => {
             this.foo = 'bar';
         }
     }
-    expect(match(new Foo(),
-        when({foo: 'foo'}).then('foo'),
-        when({foo: 'bar'}).then('bar')
+    expect(when(new Foo(),
+        is({foo: 'foo'}).then('foo'),
+        is({foo: 'bar'}).then('bar')
     )).toBe('bar');
 });
 
@@ -171,9 +171,9 @@ test('works for deep matching', () => {
             }
         }
     }
-    expect(match(new Foo(),
-        when(Foo, {foo: 'foo'}).then('foo'),
-        when(Foo, {foo: {foo:{foo: 'bar'}}}).then('bar')
+    expect(when(new Foo(),
+        is(Foo, {foo: 'foo'}).then('foo'),
+        is(Foo, {foo: {foo:{foo: 'bar'}}}).then('bar')
     )).toBe('bar');
 });
 
@@ -187,51 +187,51 @@ test('works for capturing deep nested values', () => {
             }
         }
     }
-    expect(match(new Foo(),
-        when(Foo, {foo: 'foo'}).then('foo'),
-        when(Foo, {foo: {foo:{foo: _()}}}).then(x => x)
+    expect(when(new Foo(),
+        is(Foo, {foo: 'foo'}).then('foo'),
+        is(Foo, {foo: {foo:{foo: _()}}}).then(x => x)
     )).toBe('bar');
 });
 
 test('works for capturing multiple values', () => {
-    expect(match({ foo: 'foo', bar: 'bar'},
-        when(Object, {foo: _(), bar: _()}).then((x, y) => [x, y]),
-        when(Object).then('object')
+    expect(when({ foo: 'foo', bar: 'bar'},
+        is(Object, {foo: _(), bar: _()}).then((x, y) => [x, y]),
+        is(Object).then('object')
     )).toEqual(['foo', 'bar']);
 });
 
 test('works for capturing named values', () => {
-    expect(match({ foo: 'foo', bar: 'bar'},
-        when(Object, {foo: _('x'), bar: _}).then(({x}) => x),
-        when(Object).then('object')
+    expect(when({ foo: 'foo', bar: 'bar'},
+        is(Object, {foo: _('x'), bar: _}).then(({x}) => x),
+        is(Object).then('object')
     )).toEqual('foo');
 });
 
 test('works for matching shallow arrays as objects', () => {
-    expect(match(['foo', 42],
-        when(['foo']).then('foo'),
-        when(['foo', 42]).then('foo 42'),
-        when(Array).then('Array')
+    expect(when(['foo', 42],
+        is(['foo']).then('foo'),
+        is(['foo', 42]).then('foo 42'),
+        is(Array).then('Array')
     )).toEqual('foo 42');
 });
 
 test('works for capturing a nested match', () => {
-    expect(match(['foo', { bar: 42 }],
-        when(['foo', _(when({ bar: 42 }))]).then(x => x),
-        when(Array).then('Array')
+    expect(when(['foo', { bar: 42 }],
+        is(['foo', _(is({ bar: 42 }))]).then(x => x),
+        is(Array).then('Array')
     )).toEqual({ bar: 42 });
 });
 
 test('works for matching rest elements of the array', () => {
-    expect(match(['foo', 42],
-        when(['foo', _.rest]).then('foo'),
-        when(Array).then('Array')
+    expect(when(['foo', 42],
+        is(['foo', _.rest]).then('foo'),
+        is(Array).then('Array')
     )).toEqual('foo');
 });
 
 test('works for capturing rest elements of the array', () => {
-    expect(match(['foo', 42, 43],
-        when(['foo', _.rest()]),
-        when(Array).then('Array')
+    expect(when(['foo', 42, 43],
+        is(['foo', _.rest()]),
+        is(Array).then('Array')
     )).toEqual([42, 43]);
 });

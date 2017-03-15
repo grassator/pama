@@ -57,7 +57,7 @@
         callback = (typeof callback === 'function') ?
             callback : constant(callback);
         if (this.guards !== null) {
-            this.guards[this.guards.length - 1].callback = callback
+            this.guards[this.guards.length - 1].callback = callback;
         } else {
             this.callback = callback;
         }
@@ -332,7 +332,7 @@
      * @param {*=} pattern
      * @returns {PatternMatcher}
      */
-    exports['when'] = function (type, pattern) {
+    exports['is'] = function (type, pattern) {
         if (arguments.length === 0) {
             type = pattern = any;
         } else if (typeof type !== 'function') {
@@ -349,7 +349,7 @@
      * @param {...PatternMatcher} varArgs
      * @returns {*}
      */
-    exports['match'] = function (value, varArgs) { // eslint-disable-line no-unused-vars
+    exports['when'] = function (value, varArgs) { // eslint-disable-line no-unused-vars
         for (var i = 1, callback, storage; i < arguments.length; ++i) {
             storage = new CallbackArgs(value);
             if ((callback = doMatch(value, arguments[i], storage))) {
