@@ -144,6 +144,14 @@ test('works for matching with regular and custom predicates', () => {
     )).toBe('positive');
 });
 
+test('works for empty custom predicate', () => {
+    expect(when(42,
+        is()
+            .where(x => x < 0).then('negative')
+            .where().then('positive')
+    )).toBe('positive');
+});
+
 test('works for matching props on an object', () => {
     class Foo {
         constructor() {

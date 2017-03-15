@@ -21,6 +21,8 @@
         };
     }
 
+    function alwaysTrue() { return true; }
+
     function Undefined() {
     }
 
@@ -38,10 +40,11 @@
     }
 
     /**
-     * @param {Function} predicate
+     * @param {Function=} predicate
      * @returns {PatternMatcher}
      */
     PatternMatcher.prototype['where'] = function (predicate) {
+        predicate = predicate || alwaysTrue;
         if (this.guards === null) {
             this.guards = [];
         }
