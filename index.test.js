@@ -1,6 +1,6 @@
 /* global test, expect */
 
-const {when, is, _} = require('./index');
+const {when, is, otherwise, _} = require('./index');
 
 test('returns undefined when there are no matchers are provided', () => {
     const obj = {};
@@ -115,13 +115,13 @@ test('works for custom classes', () => {
 test('works for matching anything', () => {
     expect(when(9,
         is(42).then('the answer'),
-        is().then('not the answer')
+        otherwise('not the answer')
     )).toBe('not the answer');
 });
 
 test('works for matching with custom predicates', () => {
     expect(when(42,
-        is()
+        otherwise
             .where(x => x < 0).then('negative')
             .where(x => x >= 0).then('positive')
     )).toBe('positive');
@@ -137,18 +137,26 @@ test('works for matching with custom predicates', () => {
     )).toBe('positive');
 });
 
-test('works for matching with regular and custom predicates', () => {
+test('works for matching with regular predicates and predicates with guards', () => {
     expect(when(42,
         is().where(x => x < 0).then('negative'),
         is().then('positive')
     )).toBe('positive');
 });
 
-test('works for empty custom predicate', () => {
+test('works for empty guards', () => {
     expect(when(42,
         is()
             .where(x => x < 0).then('negative')
             .where().then('positive')
+    )).toBe('positive');
+});
+
+test('supports `otherwise` as a alias for an empty guard with `then`', () => {
+    expect(when(42,
+        is()
+            .where(x => x < 0).then('negative')
+            .otherwise('positive')
     )).toBe('positive');
 });
 

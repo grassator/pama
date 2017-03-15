@@ -68,6 +68,49 @@
     };
 
     /**
+     * @param {Function} callback
+     * @returns {PatternMatcher}
+     */
+    PatternMatcher.prototype['otherwise'] = function (callback) {
+        return this.where().then(callback);
+    };
+
+    /**
+     * @param {*=} type
+     * @param {*=} pattern
+     * @returns {PatternMatcher}
+     */
+    function is(type, pattern) {
+        if (arguments.length === 0) {
+            type = pattern = any;
+        } else if (typeof type !== 'function') {
+            pattern = type;
+            type = patternToType(pattern);
+        } else if (arguments.length === 1) {
+            pattern = any;
+        }
+        return new PatternMatcher(type, pattern);
+    }
+
+    /**
+     * @param {*=} type
+     * @param {*=} pattern
+     * @returns {PatternMatcher}
+     */
+    function otherwise(type, pattern) { // eslint-disable-line no-unused-vars
+        const matcher = is();
+        return matcher['then'].apply(matcher, arguments);
+    }
+
+    /**
+     * @param {Function=} predicate
+     * @returns {PatternMatcher}
+     */
+    otherwise['where'] = function (predicate) {
+        return is()['where'](predicate);
+    };
+
+    /**
      * @param {*} name
      * @param {*} matcher
      * @constructor
@@ -329,22 +372,7 @@
 
     var exports = {};
 
-    /**
-     * @param {*=} type
-     * @param {*=} pattern
-     * @returns {PatternMatcher}
-     */
-    exports['is'] = function (type, pattern) {
-        if (arguments.length === 0) {
-            type = pattern = any;
-        } else if (typeof type !== 'function') {
-            pattern = type;
-            type = patternToType(pattern);
-        } else if (arguments.length === 1) {
-            pattern = any;
-        }
-        return new PatternMatcher(type, pattern);
-    };
+    exports['is'] = is;
 
     /**
      * @param {*} value
@@ -361,6 +389,7 @@
     };
 
     exports['_'] = exports['any'] = any;
+    exports['otherwise'] = otherwise;
 
     return exports;
 }));
