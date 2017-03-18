@@ -36,17 +36,28 @@ import {match, when, _} from 'pama';
 Here's how you can check for a specific number, string or anything else:
 
 ```js
-const foo = (smth) => match(smth,
-    when(42).then('The Answer!'),
-    when(String).then((str) => str.length),
-    when(/* anything else */).then('dunno')
+const foo = (smth) => when(smth,
+    is(42).then('The Answer!'),
+    is(String).then((str) => str.length),
+    otherwise('dunno')
 );
 ```
 
 An important difference of `match` function vs `switch` is that it returns the result
 of the matched branch, which makes writing functional-style code easier.
 
-Another thing to keep in mind is that the order of branches is important. 
+Another thing to keep in mind is that the order of branches is important.
+
+## Known Limitations
+
+1. `pama` supports only one value to match. This, however, can be easily mitigated by using an array literal:
+    ```js
+    when([x, y],
+       is([0, 1]).then('hit'),
+       otherwise('no hit')
+    );
+    ```
+2. At the moment there is no support for rest matching of value in the middle of array.
 
 ## Additional Features
 
@@ -56,9 +67,9 @@ Another thing to keep in mind is that the order of branches is important.
 
 ```js
 when(42,
-    is(Number, _)
-        .where(x => x < 0).then('negative')
-        .where(x => x >= 0).then('positive')
+    is(Number)
+        .if(x => x < 0).then('negative')
+        .if(x => x >= 0).then('positive')
 ); // returns 'positive'
 ```
 
@@ -79,7 +90,16 @@ class Foo {
 when(new Foo(),
     is(Foo, {foo: 'foo'}).then('foo'),
     is(Foo, {foo: {foo:{foo: 'bar'}}}).then('bar')
-); // return 'bar'
+); // returns 'bar'
+```
+
+### Matching Rest of Array
+
+```js
+when(['foo', 42, 43],
+        is(['foo', _.rest()]),
+        is(Array).then('Array')
+); // returns [42, 43]
 ```
 
 ## Browser / Environment Support
