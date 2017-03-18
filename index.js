@@ -281,7 +281,9 @@
                     isMatch = value === pattern;
                     break;
                 default:
-                    isMatch = doMatchObject(value, pattern, storage);
+                    isMatch = pattern === null ?
+                        pattern === value :
+                        doMatchObject(value, pattern, storage);
                     break;
             }
         }

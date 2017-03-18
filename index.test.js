@@ -94,6 +94,14 @@ test('works for null', () => {
     )).toBe('object');
 });
 
+test('does not match any object as null', () => {
+    expect(when({},
+        is(null).then('null'),
+        is(false).then('false'),
+        is(Object).then('object')
+    )).toBe('object');
+});
+
 test('works for undefined', () => {
     expect(when(undefined,
         is(false).then('false'),
