@@ -2,9 +2,9 @@
 
 const {when, is, otherwise, any:_} = require('./index');
 
-test('returns undefined when there are no matchers are provided', () => {
-    const obj = {};
-    expect(when(obj)).toBe(undefined);
+test('throws when there are no matchers are provided', () => {
+    expect(() => when({}))
+        .toThrow(Error);
 });
 
 test('works for matching boolean values', () => {

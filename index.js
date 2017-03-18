@@ -23,6 +23,8 @@
 
     function alwaysTrue() { return true; }
 
+    function error(msg) { throw new Error(msg); }
+
     function Undefined() {
     }
 
@@ -383,6 +385,9 @@
      * @returns {*}
      */
     exports['when'] = function (value, varArgs) { // eslint-disable-line no-unused-vars
+        if (arguments.length < 2) {
+            error('You need to provide at least one matcher');
+        }
         for (var i = 1, callback, storage; i < arguments.length; ++i) {
             storage = new CallbackArgs(value);
             if ((callback = doMatch(value, arguments[i], storage))) {
