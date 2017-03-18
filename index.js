@@ -379,12 +379,13 @@
 
     exports['is'] = is;
 
-    /**
-     * @param {*} value
-     * @param {...PatternMatcher} varArgs
-     * @returns {*}
-     */
-    exports['when'] = function (value, varArgs) { // eslint-disable-line no-unused-vars
+    function when (value, varArgs) { // eslint-disable-line no-unused-vars
+        if (value instanceof PatternMatcher) {
+            var args = Array.prototype.slice.call(arguments);
+            return function (value) {
+                return when.apply(undefined, [value].concat(args));
+            };
+        }
         if (arguments.length < 2) {
             error('You need to provide at least one matcher');
         }
@@ -394,7 +395,14 @@
                 return callback.apply(undefined, storage.toArray());
             }
         }
-    };
+    }
+
+    /**
+     * @param {*} value
+     * @param {...PatternMatcher} varArgs
+     * @returns {*}
+     */
+    exports['when'] = when;
 
     exports['_'] = exports['any'] = any;
     exports['otherwise'] = otherwise;

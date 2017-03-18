@@ -280,3 +280,7 @@ test('works for capturing rest elements of the array', () => {
         is(Array).then('Array')
     )).toEqual([42, 43]);
 });
+
+test('allows to auto-create a function when a an element to match is not provided', () => {
+    expect(when(is(true))).toBeInstanceOf(Function);
+});
