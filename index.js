@@ -43,7 +43,7 @@
      * @param {Function=} predicate
      * @returns {PatternMatcher}
      */
-    PatternMatcher.prototype['where'] = function (predicate) {
+    PatternMatcher.prototype['if'] = function (predicate) {
         predicate = predicate || alwaysTrue;
         if (this.guards === null) {
             this.guards = [];
@@ -53,7 +53,7 @@
     };
 
     /**
-     * @param {Function} callback
+     * @param {Function|*} callback
      * @returns {PatternMatcher}
      */
     PatternMatcher.prototype['then'] = function (callback) {
@@ -72,7 +72,7 @@
      * @returns {PatternMatcher}
      */
     PatternMatcher.prototype['otherwise'] = function (callback) {
-        return this.where().then(callback);
+        return this.if().then(callback);
     };
 
     /**
@@ -106,8 +106,8 @@
      * @param {Function=} predicate
      * @returns {PatternMatcher}
      */
-    otherwise['where'] = function (predicate) {
-        return is()['where'](predicate);
+    otherwise['if'] = function (predicate) {
+        return is()['if'](predicate);
     };
 
     /**
@@ -138,6 +138,8 @@
         }
     }
 
+    createCapture.rest = remainingArrayItems;
+
     var any = createCapture;
 
     /**
@@ -149,8 +151,6 @@
         capture.isRest = true;
         return capture;
     }
-
-    any.rest = createCapture.rest = remainingArrayItems;
 
     /**
      * @param {*} value
@@ -371,8 +371,6 @@
         }
         return true;
     }
-
-    var exports = {};
 
     exports['is'] = is;
 

@@ -1,6 +1,6 @@
 /* global test, expect */
 
-const {when, is, otherwise, _} = require('./index');
+const {when, is, otherwise, any:_} = require('./index');
 
 test('returns undefined when there are no matchers are provided', () => {
     const obj = {};
@@ -130,24 +130,24 @@ test('works for matching anything', () => {
 test('works for matching with custom predicates', () => {
     expect(when(42,
         otherwise
-            .where(x => x < 0).then('negative')
-            .where(x => x >= 0).then('positive')
+            .if(x => x < 0).then('negative')
+            .if(x => x >= 0).then('positive')
     )).toBe('positive');
     expect(when(42,
         is(Number)
-            .where(x => x < 0).then('negative')
-            .where(x => x >= 0).then('positive')
+            .if(x => x < 0).then('negative')
+            .if(x => x >= 0).then('positive')
     )).toBe('positive');
     expect(when(42,
         is(Number, 42)
-            .where(x => x < 0).then('negative')
-            .where(x => x >= 0).then('positive')
+            .if(x => x < 0).then('negative')
+            .if(x => x >= 0).then('positive')
     )).toBe('positive');
 });
 
 test('works for matching with regular predicates and predicates with guards', () => {
     expect(when(42,
-        is().where(x => x < 0).then('negative'),
+        is().if(x => x < 0).then('negative'),
         is().then('positive')
     )).toBe('positive');
 });
@@ -155,15 +155,15 @@ test('works for matching with regular predicates and predicates with guards', ()
 test('works for empty guards', () => {
     expect(when(42,
         is()
-            .where(x => x < 0).then('negative')
-            .where().then('positive')
+            .if(x => x < 0).then('negative')
+            .if().then('positive')
     )).toBe('positive');
 });
 
 test('supports `otherwise` as a alias for an empty guard with `then`', () => {
     expect(when(42,
         is()
-            .where(x => x < 0).then('negative')
+            .if(x => x < 0).then('negative')
             .otherwise('positive')
     )).toBe('positive');
 });
