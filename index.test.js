@@ -180,6 +180,13 @@ test('works for matching props on an object', () => {
     )).toBe('bar');
 });
 
+test('`any` match should check for the presence of property on the object', () => {
+    expect(when({},
+        is({foo: _}).then('foo'),
+        is({}).then('empty')
+    )).toBe('empty');
+});
+
 test('works for matching props on an object without class', () => {
     class Foo {
         constructor() {

@@ -363,6 +363,9 @@
         } else {
             for (var key in pattern) {
                 if (pattern.hasOwnProperty(key)) {
+                    if (!(key in value)) {
+                        return false;
+                    }
                     if (!doMatchObjectInternal(value[key], pattern[key], storage)) {
                         return false;
                     }
