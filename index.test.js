@@ -168,6 +168,15 @@ test('supports `otherwise` as a alias for an empty guard with `then`', () => {
     )).toBe('positive');
 });
 
+test('correctly applies original condition to the guards', () => {
+    expect(when({ type: 'foo' },
+        is({ type: 'bar' })
+            .if(o => Object.keys(o).length > 5).then('big object')
+            .otherwise('small object'),
+        otherwise('string')
+    )).toBe('string');
+});
+
 test('works for matching props on an object', () => {
     class Foo {
         constructor() {

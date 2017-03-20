@@ -268,7 +268,7 @@
                 break;
         }
         var guards = matcher.guards;
-        var isMatch = guards === null;
+        var isMatch = false;
         if (pattern !== any) {
             switch (matcher.type) {
                 case Number:
@@ -288,15 +288,16 @@
                         doMatchObject(value, pattern, storage);
                     break;
             }
+        } else {
+            isMatch = true;
         }
-        if (guards !== null) {
+        if (isMatch && guards !== null) {
             for (var i = 0; i < guards.length; ++i) {
                 if (guards[i].predicate(value) === true) {
-                    callback = guards[i].callback;
-                    isMatch = true;
-                    break;
+                    return guards[i].callback;
                 }
             }
+            return null;
         }
         return isMatch ? callback : null;
     }
