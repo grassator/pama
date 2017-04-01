@@ -30,8 +30,8 @@
                 return false;
             }
         }
-        if (pattern === any) {
-            return true;
+        if (typeof pattern === 'function' && typeOrPattern !== 'function') {
+            return pattern(value);
         }
         if (typeof pattern !== 'object' || pattern === null) {
             return value === pattern;

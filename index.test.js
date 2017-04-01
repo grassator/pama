@@ -54,7 +54,7 @@ test('works for null', () => {
 });
 
 test('works for undefined', () => {
-    expect(when(undefined, _ =>
+    expect(when(undefined, ()/**/ =>
         is(false) ? 'false' :
         is(undefined) ? 'undefined' :
         is(null) ? 'null' :
@@ -152,3 +152,19 @@ test('works for caching guards', () => {
         'does not matter'
     )).toBe('many');
 });
+
+test('support custom matchers by accepting them as arguments to `is`', () => {
+    expect(when([1, 2, 3], () =>
+        is(Array.isArray) ? 'array' :
+        'not an array'
+    )).toBe('array');
+});
+
+test('supports matching on functions', () => {
+    const f = () => {};
+    expect(when(f, () =>
+        is('function', f) ? 'function f' :
+        'not a function f'
+    )).toBe('function f');
+});
+
