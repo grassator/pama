@@ -11,8 +11,6 @@
 
     'use strict';
 
-    var currentValue;
-
     /**
      * @returns {boolean}
      */
@@ -21,7 +19,7 @@
     }
 
     function is(value, typeOrPattern, pattern) {
-        if (pattern === undefined) {
+        if (typeof pattern === 'undefined') {
             pattern = typeOrPattern;
         } else {
             if (typeof typeOrPattern === 'string') {
@@ -51,19 +49,24 @@
         return true;
     }
 
+    var currentValue;
+
     function when(value, callback) {
-        if (callback === undefined) {
+        if (typeof callback === 'undefined') {
             callback = value;
             return function (value) {
                 return when(value, callback);
             };
         }
 
+        var result;
+
         // This is necessary to support nested matching
         var previousValue = currentValue;
         currentValue = value;
+
         try {
-            var result = callback(any, value);
+            result = callback(any, value);
         } finally {
             currentValue = previousValue;
         }
@@ -73,15 +76,10 @@
         return result;
     }
 
-    function createMatcher(predicate) {
-        return function (arg1, arg2) {
-            return predicate(currentValue, arg1, arg2);
-        };
-    }
-
     return {
         when: when,
-        createMatcher: createMatcher,
-        is: createMatcher(is)
+        is: function (typeOrPattern, pattern) {
+            return is(currentValue, typeOrPattern, pattern);
+        }
     };
 }));
