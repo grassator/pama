@@ -30,20 +30,20 @@ npm install -D pama
 Then import it into your project:
 
 ```js
-import {match, when, _} from 'pama';
+import {when, matches, type, eq} from 'pama';
 ```
 
 Here's how you can check for a specific number, string or anything else:
 
 ```js
-const foo = (smth) => when(smth,
-    is(42).then('The Answer!'),
-    is(String).then((str) => str.length),
-    otherwise('dunno')
+const foo = when(varToMatch, (_, x) =>
+    eq(42)       ? 'The Answer!' :
+    type(String) ? x.length :
+    'dunno'
 );
 ```
 
-An important difference of `match` function vs `switch` is that it returns the result
+An important difference of `when` function vs `switch` is that it returns the result
 of the matched branch, which makes writing functional-style code easier.
 
 Another thing to keep in mind is that the order of branches is important.
@@ -52,54 +52,42 @@ Another thing to keep in mind is that the order of branches is important.
 
 1. `pama` supports only one value to match. This, however, can be easily mitigated by using an array literal:
     ```js
-    when([x, y],
-       is([0, 1]).then('hit'),
-       otherwise('no hit')
+    when([x, y], () =>
+       matches([0, 1]) ? 'hit' :
+       'no hit'
     );
     ```
-2. At the moment there is no support for rest matching of value in the middle of array.
+2. At the moment there is no support for rest matching inside an array.
 
 ## Additional Features
 
 ### Guards
 
-*Guard* is an additional condition on top of a declarative match that allows to further refine the match:
+> *Guard* is an additional condition on top of a declarative match that allows to further refine the match.
+
+Since `pama` just expects the predicate to return a boolean value, you can add arbitrary conditions in
+the same manner as you would with a regular `if` statement:
+
 
 ```js
-when(42,
-    is(Number)
-        .if(x => x < 0).then('negative')
-        .if(x => x >= 0).then('positive')
-); // returns 'positive'
+when(varToMatch, (_, x) =>
+    eq(0)                 ? 'zero'     :
+    type(Number) && x > 0 ? 'positive' :
+    type(Number) && x < 0 ? 'negative' :
+    'not a number'
+);
 ```
-
-The function provided to a `where` must return a boolean.
 
 ### Deep Matching
 
 ```js
-class Foo {
-    constructor(depth = 0) {
-        if (depth < 2) {
-            this.foo = new Foo(depth + 1);
-        } else {
-            this.foo = 'bar';
-        }
-    }
-}
-when(new Foo(),
-    is(Foo, {foo: 'foo'}).then('foo'),
-    is(Foo, {foo: {foo:{foo: 'bar'}}}).then('bar')
+const a = {foo: {foo:{foo: 'bar'}}};
+
+when(a, _ =>
+    matches({foo: 'foo'}) ? 'foo' :
+    matches({foo: {foo:{foo: 'bar'}}}) ? 'bar' :
+    undefined
 ); // returns 'bar'
-```
-
-### Matching Rest of Array
-
-```js
-when(['foo', 42, 43],
-        is(['foo', _.rest()]),
-        is(Array).then('Array')
-); // returns [42, 43]
 ```
 
 ## Browser / Environment Support
@@ -110,7 +98,9 @@ when(['foo', 42, 43],
 
 ## License
 
-Copyright 2017 Dmitriy Kubyshkin
+The MIT License (MIT)
+
+Copyright (c) 2017 Dmitriy Kubyshkin
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

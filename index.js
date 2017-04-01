@@ -11,13 +11,7 @@
 
     'use strict';
 
-    /**
-     * @param {*} x
-     * @returns {*}
-     */
-    function id(x) {
-        return x;
-    }
+    var currentValue;
 
     /**
      * @param {*} x
@@ -62,25 +56,39 @@
         return true;
     }
 
-    function when (value, callback) {
+    function when(value, callback) {
         if (callback === undefined) {
             callback = value;
             return function (value) {
                 return when(value, callback);
             };
         }
-        const result = callback({
-            _: any,
-            id: id,
-            eq: eq.bind(undefined, value),
-            type: type.bind(undefined, value),
-            matches: matches.bind(undefined, value)
-        }, value);
+
+        // This is necessary to support nested matching
+        var previousValue = currentValue;
+        currentValue = value;
+        try {
+            var result = callback(any, value);
+        } finally {
+            currentValue = previousValue;
+        }
         if (typeof result === 'function') {
             return result(value);
         }
         return result;
     }
 
-    return when;
+    function createMatcher(predicate) {
+        return function (arg) {
+            return predicate(currentValue, arg);
+        };
+    }
+
+    return {
+        when: when,
+        createMatcher: createMatcher,
+        matches: createMatcher(matches),
+        type: createMatcher(type),
+        eq: createMatcher(eq)
+    };
 }));

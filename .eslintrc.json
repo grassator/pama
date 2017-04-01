@@ -5,8 +5,6 @@
   },
   "extends": "eslint:recommended",
   "rules": {
-    "flowtype/define-flow-type": 1,
-    "flowtype/use-flow-type": 1,
     "indent": [
       "error",
       4,

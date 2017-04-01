@@ -2,38 +2,38 @@
 
 /* eslint-disable no-unexpected-multiline */
 
-const when = require('./index');
+const {when, eq, type, matches} = require('./index');
 
 test('works for matching boolean values', () => {
-    expect(when(false, ({eq}) =>
+    expect(when(false, () =>
         eq(true) ? 'true' :
         eq(false) ? 'false' :
         undefined
     )).toBe('false');
 });
 
-test('to have an id callback', () => {
-    expect(when(false, ({eq, id}) =>
-        eq(true) ? 'true' :
-        eq(false) ? id :
+test('passes original value as the second argument', () => {
+    expect(when(false, (_, x) =>
+        eq(true) ? x :
+        eq(false) ? x :
         undefined
     )).toBe(false);
 });
 
 test('works for matching number', () => {
-    expect(when(42, ({eq, id}) =>
-        eq(0) ? id :
-        eq(42) ? id :
-        eq(79) ? id :
+    expect(when(42, (_, x) =>
+        eq(0) ? x :
+        eq(42) ? x :
+        eq(79) ? x :
         undefined
     )).toBe(42);
-    expect(when(Infinity, ({eq, id}) =>
-        eq(0) ? id :
-        eq(Infinity) ? id :
-        eq(79) ? id :
+    expect(when(Infinity, (_, x) =>
+        eq(0) ? x :
+        eq(Infinity) ? x :
+        eq(79) ? x :
         undefined
     )).toBe(Infinity);
-    expect(when(Infinity, ({type}) =>
+    expect(when(Infinity, () =>
         type('string') ? 'string' :
         type('number') ? 'number' :
         undefined
@@ -41,13 +41,13 @@ test('works for matching number', () => {
 });
 
 test('works for null', () => {
-    expect(when(null, ({eq}) =>
+    expect(when(null, () =>
         eq(undefined) ? 'undefined' :
         eq(false) ? 'false' :
         eq(null) ? 'null' :
         undefined
     )).toBe('null');
-    expect(when(null, ({eq, type}) =>
+    expect(when(null, () =>
         eq(undefined) ? 'undefined' :
         eq(false) ? 'false' :
         type('object') ? 'object' :
@@ -56,7 +56,7 @@ test('works for null', () => {
 });
 
 test('works for undefined', () => {
-    expect(when(undefined, ({eq}) =>
+    expect(when(undefined, () =>
         eq(false) ? 'false' :
         eq(undefined) ? 'undefined' :
         eq(null) ? 'null' :
@@ -67,7 +67,7 @@ test('works for undefined', () => {
 test('works for custom classes', () => {
     class Foo {}
     class Bar {}
-    expect(when(new Foo(), ({type}) =>
+    expect(when(new Foo(), () =>
         type(Bar) ? 'Bar' :
         type(Foo) ? 'Foo' :
         undefined
@@ -75,7 +75,7 @@ test('works for custom classes', () => {
 });
 
 test('works for matching anything', () => {
-    expect(when(9, ({eq}) =>
+    expect(when(9, () =>
         eq(42) ? 'the answer' :
         'not the answer'
     )).toBe('not the answer');
@@ -87,7 +87,7 @@ test('works for matching props on an object', () => {
             this.foo = 'bar';
         }
     }
-    expect(when(new Foo(), ({matches}) =>
+    expect(when(new Foo(), () =>
         matches({foo: 'foo'}) ? 'foo' :
         matches({foo: 'bar'}) ? 'bar' :
         undefined
@@ -95,7 +95,7 @@ test('works for matching props on an object', () => {
 });
 
 test('`any` match should check for the presence of property on the object', () => {
-    expect(when({}, ({matches, _}) =>
+    expect(when({}, _ =>
         matches({foo: _}) ? 'foo' :
         matches({}) ? 'empty' :
         undefined
@@ -112,7 +112,7 @@ test('works for deep matching', () => {
             }
         }
     }
-    expect(when(new Foo(), ({matches}) =>
+    expect(when(new Foo(), () =>
         matches({foo: 'foo'}) ? 'foo' :
         matches({foo: {foo: {foo: 'bar'}}}) ? 'bar' :
         undefined
@@ -120,7 +120,7 @@ test('works for deep matching', () => {
 });
 
 test('works for matching shallow arrays as objects', () => {
-    expect(when(['foo', 42], ({matches, type}) =>
+    expect(when(['foo', 42], () =>
         matches(['foo', 9]) ? 'foo 9' :
         matches(['foo', 42]) ? 'foo 42' :
         type(Array) ? 'Array' :
@@ -129,8 +129,19 @@ test('works for matching shallow arrays as objects', () => {
 });
 
 test('allows to auto-create a function when a an element to match is not provided', () => {
-    expect(when(({eq}) =>
+    expect(when(() =>
         eq(true) ? 'true' :
         undefined
     )).toBeInstanceOf(Function);
+});
+
+test('works for nested matches', () => {
+    expect(when(42, (_, x) =>
+        type('string') ? x :
+        type('number') ? num => when(num % 2, () =>
+            eq(0) ? 'even' :
+            'odd'
+        ) :
+        undefined
+    )).toBe('even');
 });
