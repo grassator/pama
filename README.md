@@ -30,15 +30,15 @@ npm install -D pama
 Then import it into your project:
 
 ```js
-import {when, matches, type, eq} from 'pama';
+import {when, is} from 'pama';
 ```
 
 Here's how you can check for a specific number, string or anything else:
 
 ```js
 const foo = when(varToMatch, (_, x) =>
-    eq(42)       ? 'The Answer!' :
-    type(String) ? x.length :
+    is(42)       ? 'The Answer!' :
+    is('string', _) ? x.length :
     'dunno'
 );
 ```
@@ -53,7 +53,7 @@ Another thing to keep in mind is that the order of branches is important.
 1. `pama` supports only one value to match. This, however, can be easily mitigated by using an array literal:
     ```js
     when([x, y], () =>
-       matches([0, 1]) ? 'hit' :
+       is([0, 1]) ? 'hit' :
        'no hit'
     );
     ```
@@ -71,9 +71,9 @@ the same manner as you would with a regular `if` statement:
 
 ```js
 when(varToMatch, (_, x) =>
-    eq(0)                 ? 'zero'     :
-    type(Number) && x > 0 ? 'positive' :
-    type(Number) && x < 0 ? 'negative' :
+    is(0)                 ? 'zero'     :
+    is('number', _) && x > 0 ? 'positive' :
+    is('number', _) && x < 0 ? 'negative' :
     'not a number'
 );
 ```
@@ -84,8 +84,8 @@ when(varToMatch, (_, x) =>
 const a = {foo: {foo:{foo: 'bar'}}};
 
 when(a, _ =>
-    matches({foo: 'foo'}) ? 'foo' :
-    matches({foo: {foo:{foo: 'bar'}}}) ? 'bar' :
+    is({foo: 'foo'}) ? 'foo' :
+    is({foo: {foo:{foo: 'bar'}}}) ? 'bar' :
     undefined
 ); // returns 'bar'
 ```

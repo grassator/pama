@@ -1,65 +1,63 @@
 /* global test, expect */
 
-/* eslint-disable no-unexpected-multiline */
 
-const {when, eq, type, matches} = require('./index');
+const {when, is} = require('./index');
 
 test('works for matching boolean values', () => {
     expect(when(false, () =>
-        eq(true) ? 'true' :
-        eq(false) ? 'false' :
+        is(true) ? 'true' :
+        is(false) ? 'false' :
         undefined
     )).toBe('false');
 });
 
 test('passes original value as the second argument', () => {
     expect(when(false, (_, x) =>
-        eq(true) ? x :
-        eq(false) ? x :
+        is(true) ? x :
+        is(false) ? x :
         undefined
     )).toBe(false);
 });
 
 test('works for matching number', () => {
     expect(when(42, (_, x) =>
-        eq(0) ? x :
-        eq(42) ? x :
-        eq(79) ? x :
+        is(0) ? x :
+        is(42) ? x :
+        is(79) ? x :
         undefined
     )).toBe(42);
     expect(when(Infinity, (_, x) =>
-        eq(0) ? x :
-        eq(Infinity) ? x :
-        eq(79) ? x :
+        is(0) ? x :
+        is(Infinity) ? x :
+        is(79) ? x :
         undefined
     )).toBe(Infinity);
-    expect(when(Infinity, () =>
-        type('string') ? 'string' :
-        type('number') ? 'number' :
+    expect(when(Infinity, _ =>
+        is('string', _) ? 'string' :
+        is('number', _) ? 'number' :
         undefined
     )).toBe('number');
 });
 
 test('works for null', () => {
     expect(when(null, () =>
-        eq(undefined) ? 'undefined' :
-        eq(false) ? 'false' :
-        eq(null) ? 'null' :
+        is(false) ? 'false' :
+        is(null) ? 'null' :
         undefined
     )).toBe('null');
-    expect(when(null, () =>
-        eq(undefined) ? 'undefined' :
-        eq(false) ? 'false' :
-        type('object') ? 'object' :
+    expect(when(null, _ =>
+        is(undefined) ? 'undefined' :
+        is(false) ? 'false' :
+        is('object', _) ? 'object' :
         undefined
     )).toBe('object');
 });
 
 test('works for undefined', () => {
-    expect(when(undefined, () =>
-        eq(false) ? 'false' :
-        eq(undefined) ? 'undefined' :
-        eq(null) ? 'null' :
+    expect(when(undefined, _ =>
+        is(false) ? 'false' :
+        is(undefined) ? 'undefined' :
+        is(null) ? 'null' :
         undefined
     )).toBe('undefined');
 });
@@ -67,16 +65,16 @@ test('works for undefined', () => {
 test('works for custom classes', () => {
     class Foo {}
     class Bar {}
-    expect(when(new Foo(), () =>
-        type(Bar) ? 'Bar' :
-        type(Foo) ? 'Foo' :
+    expect(when(new Foo(), _ =>
+        is(Bar, _) ? 'Bar' :
+        is(Foo, _) ? 'Foo' :
         undefined
     )).toBe('Foo');
 });
 
 test('works for matching anything', () => {
     expect(when(9, () =>
-        eq(42) ? 'the answer' :
+        is(42) ? 'the answer' :
         'not the answer'
     )).toBe('not the answer');
 });
@@ -88,16 +86,16 @@ test('works for matching props on an object', () => {
         }
     }
     expect(when(new Foo(), () =>
-        matches({foo: 'foo'}) ? 'foo' :
-        matches({foo: 'bar'}) ? 'bar' :
+        is({foo: 'foo'}) ? 'foo' :
+        is({foo: 'bar'}) ? 'bar' :
         undefined
     )).toBe('bar');
 });
 
 test('`any` match should check for the presence of property on the object', () => {
     expect(when({}, _ =>
-        matches({foo: _}) ? 'foo' :
-        matches({}) ? 'empty' :
+        is({foo: _}) ? 'foo' :
+        is({}) ? 'empty' :
         undefined
     )).toBe('empty');
 });
@@ -113,33 +111,33 @@ test('works for deep matching', () => {
         }
     }
     expect(when(new Foo(), () =>
-        matches({foo: 'foo'}) ? 'foo' :
-        matches({foo: {foo: {foo: 'bar'}}}) ? 'bar' :
+        is({foo: 'foo'}) ? 'foo' :
+        is({foo: {foo: {foo: 'bar'}}}) ? 'bar' :
         undefined
     )).toBe('bar');
 });
 
 test('works for matching shallow arrays as objects', () => {
-    expect(when(['foo', 42], () =>
-        matches(['foo', 9]) ? 'foo 9' :
-        matches(['foo', 42]) ? 'foo 42' :
-        type(Array) ? 'Array' :
+    expect(when(['foo', 42], _ =>
+        is(['foo', 9]) ? 'foo 9' :
+        is(['foo', 42]) ? 'foo 42' :
+        is(Array, _) ? 'Array' :
         undefined
     )).toBe('foo 42');
 });
 
 test('allows to auto-create a function when a an element to match is not provided', () => {
     expect(when(() =>
-        eq(true) ? 'true' :
+        is(true) ? 'true' :
         undefined
     )).toBeInstanceOf(Function);
 });
 
 test('works for nested matches', () => {
     expect(when(42, (_, x) =>
-        type('string') ? x :
-        type('number') ? num => when(num % 2, () =>
-            eq(0) ? 'even' :
+        is('string', _) ? x :
+        is('number', _) ? num => when(num % 2, () =>
+            is(0) ? 'even' :
             'odd'
         ) :
         undefined

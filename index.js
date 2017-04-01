@@ -14,29 +14,24 @@
     var currentValue;
 
     /**
-     * @param {*} x
-     * @param {*} y
-     * @returns {boolean}
-     */
-    function eq(x, y) {
-        return x === y;
-    }
-
-    /**
      * @returns {boolean}
      */
     function any() {
         return true;
     }
 
-    function type(thing, classOrType) {
-        if (typeof classOrType === 'string') {
-            return typeof thing === classOrType;
+    function is(value, typeOrPattern, pattern) {
+        if (pattern === undefined) {
+            pattern = typeOrPattern;
+        } else {
+            if (typeof typeOrPattern === 'string') {
+                if (typeof value !== typeOrPattern) {
+                    return false;
+                }
+            } else if (!(value instanceof typeOrPattern)) {
+                return false;
+            }
         }
-        return thing instanceof classOrType;
-    }
-
-    function matches(value, pattern) {
         if (pattern === any) {
             return true;
         }
@@ -48,7 +43,7 @@
         }
         for (var prop in pattern) {
             if (pattern.hasOwnProperty(prop)) {
-                if (!(prop in value) || !matches(value[prop], pattern[prop])) {
+                if (!(prop in value) || !is(value[prop], pattern[prop])) {
                     return false;
                 }
             }
@@ -79,16 +74,14 @@
     }
 
     function createMatcher(predicate) {
-        return function (arg) {
-            return predicate(currentValue, arg);
+        return function (arg1, arg2) {
+            return predicate(currentValue, arg1, arg2);
         };
     }
 
     return {
         when: when,
         createMatcher: createMatcher,
-        matches: createMatcher(matches),
-        type: createMatcher(type),
-        eq: createMatcher(eq)
+        is: createMatcher(is)
     };
 }));
