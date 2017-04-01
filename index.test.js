@@ -143,3 +143,12 @@ test('works for nested matches', () => {
         undefined
     )).toBe('even');
 });
+
+test('works for caching guards', () => {
+    expect(when([1, 2, 3], (_, x, g) =>
+        (g = is(Array, _)) &&
+            g && x.length === 1 ? 'one' :
+            g && x.length > 1   ? 'many' :
+        'does not matter'
+    )).toBe('many');
+});

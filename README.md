@@ -90,6 +90,18 @@ when(a, _ =>
 ); // returns 'bar'
 ```
 
+If you are have performance concerns, or don't want to repeat yourself you can make the
+flexibility of JS work to your advantage:
+
+```js
+when(varToMatch, (_, x, g) =>
+    (g = is({ foo: 'bar', num: _ })) &&
+        g && x.num > 0 ? 'positive' :
+        g && x < 0     ? 'negative' :
+    'not a number'
+);
+```
+
 ## Browser / Environment Support
 
 * Evergreen (Chrome, Firefox, Opera, Safari, Edge)
