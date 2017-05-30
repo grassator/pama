@@ -1,6 +1,6 @@
 {
   "name": "pama",
-  "version": "0.0.12",
+  "version": "0.1.0",
   "description": "Pattern matching in JavaScript",
   "main": "index.js",
   "repository": "https://github.com/grassator/pama.git",
