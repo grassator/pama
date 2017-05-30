@@ -1,7 +1,7 @@
 /* global test, expect */
 
 
-const {when, is} = require('./index');
+const {when, is, otherwise} = require('./index');
 
 test('works for matching boolean values', () => {
     expect(when(false, () =>
@@ -54,7 +54,7 @@ test('works for null', () => {
 });
 
 test('works for undefined', () => {
-    expect(when(undefined, ()/**/ =>
+    expect(when(undefined, () =>
         is(false) ? 'false' :
         is(undefined) ? 'undefined' :
         is(null) ? 'null' :
@@ -158,6 +158,14 @@ test('support custom matchers by accepting them as arguments to `is`', () => {
         is(Array.isArray) ? 'array' :
         'not an array'
     )).toBe('array');
+});
+
+
+test('support pass-through explicit `otherwise`', () => {
+    expect(when(12, () =>
+        is('string') ? 'string' :
+        otherwise('not a string')
+    )).toBe('not a string');
 });
 
 test('supports matching on functions', () => {

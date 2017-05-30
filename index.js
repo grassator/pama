@@ -18,6 +18,14 @@
         return true;
     }
 
+    /**
+     * @param {*} value
+     * @return {*}
+     */
+    function otherwise(value) {
+        return value;
+    }
+
     function is(value, typeOrPattern, pattern) {
         if (typeof pattern === 'undefined') {
             pattern = typeOrPattern;
@@ -78,6 +86,7 @@
 
     return {
         when: when,
+        otherwise: otherwise,
         is: function (typeOrPattern, pattern) {
             return is(currentValue, typeOrPattern, pattern);
         }
