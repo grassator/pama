@@ -44,6 +44,12 @@
         if (typeof pattern !== 'object' || pattern === null) {
             return value === pattern;
         }
+        if (pattern instanceof RegExp) {
+            if (typeof value !== 'string') {
+                return false;
+            }
+            return pattern.test(value);
+        }
         if (typeof value !== 'object') {
             return false;
         }

@@ -168,11 +168,23 @@ test('support pass-through explicit `otherwise`', () => {
     )).toBe('not a string');
 });
 
-test('supports matching on functions', () => {
-    const f = () => {};
-    expect(when(f, () =>
-        is('function', f) ? 'function f' :
-        'not a function f'
-    )).toBe('function f');
+test('supports regex matching', () => {
+    expect(when('foo', () =>
+        is(/bar/) ? 'bar' :
+        is(/f\w+/) ? 'f-like' :
+        otherwise('weird')
+    )).toBe('f-like');
 });
 
+test('should not regex match if the value is not a string', () => {
+    const val = {
+        toString() {
+            return 'foo';
+        }
+    };
+    expect(when(val, () =>
+        is(/bar/) ? 'bar' :
+        is(/f\w+/) ? 'f-like' :
+        otherwise('weird')
+    )).toBe('weird');
+});

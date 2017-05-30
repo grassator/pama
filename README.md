@@ -88,6 +88,21 @@ is to put `undefined` on this place.
 
 ## Advanced Usage
 
+### Regular Expression
+
+It is possible to match string values directly with regular expressions:
+
+```js
+when('foo', _ =>
+    is(/b\w+/) ? 'b-like' :
+    is(/f\w+/) ? 'f-like' :
+    undefined
+); // returns 'f-like'
+```
+
+> one thing to note is that unlike regular someRegexp.test(), this check does not coerce the type to string, so if
+provided value is not a string, it will automatically doesn't match this branch. 
+
 ### Guards
 
 > *Guard* is an additional condition on top of a declarative match that allows to further refine the match.
