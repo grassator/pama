@@ -18,6 +18,12 @@
         return true;
     }
 
+    any.is = function (typeOrPattern, pattern) {
+        return function match(value) {
+            return is(value, typeOrPattern, pattern);
+        };
+    };
+
     /**
      * @param {*} value
      * @return {*}

@@ -126,6 +126,14 @@ test('works for matching shallow arrays as objects', () => {
     )).toBe('foo 42');
 });
 
+test('works for matching matching of items inside arrays ', () => {
+    expect(when(['foo', 42], _ =>
+        is([_.is('number', _), 9]) ? 'number & 9' :
+        is([_.is('string', _), 42]) ? 'string & 42' :
+        undefined
+    )).toBe('string & 42');
+});
+
 test('allows to auto-create a function when a an element to match is not provided', () => {
     expect(when(() =>
         is(true) ? 'true' :
@@ -191,8 +199,8 @@ test('should not regex match if the value is not a string', () => {
 
 test('supports throwing a type error', () => {
     expect(() => {
-        when('foo', () =>
-            is('number') ? 'number' :
+        when('foo', _ =>
+            is('number', _) ? 'number' :
             otherwise(TypeError)
         );
     }).toThrowError(TypeError);
