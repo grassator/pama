@@ -84,6 +84,9 @@
         } finally {
             currentValue = previousValue;
         }
+        if (result === TypeError) {
+            throw new TypeError('Unexpected value ' + value);
+        }
         if (typeof result === 'function') {
             return result(value);
         }

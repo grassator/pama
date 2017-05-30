@@ -188,3 +188,12 @@ test('should not regex match if the value is not a string', () => {
         otherwise('weird')
     )).toBe('weird');
 });
+
+test('supports throwing a type error', () => {
+    expect(() => {
+        when('foo', () =>
+            is('number') ? 'number' :
+            otherwise(TypeError)
+        );
+    }).toThrowError(TypeError);
+});
